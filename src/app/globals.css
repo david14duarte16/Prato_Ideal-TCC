@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/* Tema Base */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --primary: #ef4444; /* red-500 */
+  --primary-foreground: #ffffff;
+  --border: #e5e7eb; /* gray-200 */
+  --ring: rgba(239, 68, 68, 0.2); /* red-500/20 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --muted: #1f2937;
+    --muted-foreground: #9ca3af;
+    --primary: #ef4444;
+    --primary-foreground: #ffffff;
+    --border: #27272a;
+    --ring: rgba(239, 68, 68, 0.3);
+  }
+}
+
+/* Modo Alto Contraste (WCAG AAA) - Paleta Limpa e Profissional */
+html.high-contrast {
+  --background: #121212;
+  --foreground: #ffffff;
+  --muted: #000000;
+  --muted-foreground: #dddddd;
+  --primary: #FFD500;
+  --primary-foreground: #000000;
+  --border: #ffffff;
+  --ring: #FFD500;
+}
+
+html {
+  /* Escala baseada na preferência do usuário sem quebrar rems */
+  font-size: calc(100% * (var(--base-font-size, 16) / 16));
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus-Visible Acessível e Bonito */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--ring);
+  transition: outline-offset 0.1s ease;
+}
+
+html.high-contrast :focus-visible {
+  outline: 3px solid #FFD500 !important;
+  outline-offset: 4px !important;
+  box-shadow: none !important;
+}
+
+/* Para ocultar visualmente, mas manter legível para Screen Readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Link de Pulo (Skip to Content) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 8px 16px;
+  z-index: 99999;
+  transition: top 0.2s ease;
+  font-weight: bold;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Alto Contraste: Ajustes Específicos Globais sem !important destrutivos */
+html.high-contrast * {
+  border-color: var(--border);
+}
+html.high-contrast img, 
+html.high-contrast svg {
+  filter: contrast(1.2);
+}
+
+/* Fonte para Dislexia */
+html.dyslexia-font body {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
+  line-height: 1.6 !important;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/dist/OpenDyslexic-Regular.otf');
+  font-display: swap;
+}
+
+/* Redução de Movimento (Acessibilidade Vestibular) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

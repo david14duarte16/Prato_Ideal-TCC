@@ -5,8 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 
-export default function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
+interface AuthFormProps {
+  defaultIsLogin?: boolean;
+}
+
+export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
+  const [isLogin, setIsLogin] = useState(defaultIsLogin);
   const toggleMode = () => setIsLogin((prev) => !prev);
 
   const containerVariants = {

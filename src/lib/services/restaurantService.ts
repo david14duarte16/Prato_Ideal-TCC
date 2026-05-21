@@ -10,6 +10,19 @@ export interface RestaurantCard {
   distance: string;
   image: string;
   openUntil: string;
+  openingHours?: string[]; // Array of weekday descriptions
+}
+
+export interface ReviewItem {
+  id: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
+  userEmail?: string;
+  userImage?: string | null;
+  restaurantId?: string;
+  restaurantName?: string;
 }
 
 export interface RestaurantDetails extends RestaurantCard {
@@ -17,13 +30,7 @@ export interface RestaurantDetails extends RestaurantCard {
   phone: string;
   coordinates: { lat: number; lng: number };
   photos: string[];
-  reviews: Array<{
-    id: string;
-    userName: string;
-    rating: number;
-    comment: string;
-    date: string;
-  }>;
+  reviews: ReviewItem[];
   description: string;
 }
 
@@ -438,11 +445,13 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-        "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.rating,places.photos,places.addressComponents",
+        "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.rating,places.photos,places.addressComponents,places.regularOpeningHours",
       },
+      next: { revalidate: 3600 },
       body: JSON.stringify({
         includedTypes: ["restaurant"],
         maxResultCount: 20,
+        languageCode: "pt-BR",
         locationRestriction: {
           circle: {
             center: { latitude: lat, longitude: lon },
@@ -472,7 +481,7 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
       // Foto do Google
       const photoName = place.photos?.[0]?.name;
       const imageUrl = photoName 
-        ? `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=400&maxWidthPx=600&key=${GOOGLE_MAPS_API_KEY}`
+        ? `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=800&maxWidthPx=800&key=${GOOGLE_MAPS_API_KEY}`
         : "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800";
 
       return {
@@ -492,7 +501,7 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
   }
 }
 
-export async function searchRestaurants(locationName: string, query?: string): Promise<RestaurantCard[]> {
+export async function searchRestaurants(locationName: string, query?: string, options?: { openNow?: boolean }): Promise<RestaurantCard[]> {
   const isMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
   console.log(`[RestaurantService] searchRestaurants - Mock: ${isMock}, Key exists: ${!!GOOGLE_MAPS_API_KEY}`);
   
@@ -512,6 +521,18 @@ export async function searchRestaurants(locationName: string, query?: string): P
         normalize(r.city).includes(normalize(query))
       );
     }
+    if (options?.openNow) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      results = results.filter(r => {
+        if (!r.openUntil) return true;
+        const [closingHourStr] = r.openUntil.split(':');
+        const closingHour = parseInt(closingHourStr, 10);
+        // Ex: openUntil "01:00" is next day -> closingHour 1
+        // Se fecha 00:00 ou mais tarde que atual, ou na madrugada (menor que 5h da manhã)
+        return closingHour === 0 || closingHour > currentHour || closingHour < 5;
+      });
+    }
     
     return results;
   }
@@ -529,11 +550,14 @@ export async function searchRestaurants(locationName: string, query?: string): P
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-        "X-Goog-FieldMask": "places.id,places.displayName,places.rating,places.photos,places.addressComponents",
+        "X-Goog-FieldMask": "places.id,places.displayName,places.rating,places.photos,places.addressComponents,places.regularOpeningHours",
       },
+      next: { revalidate: 3600 },
       body: JSON.stringify({
         textQuery: textQuery,
         maxResultCount: 20,
+        languageCode: "pt-BR",
+        ...(options?.openNow ? { openNow: true } : {})
       }),
     });
 
@@ -557,7 +581,7 @@ export async function searchRestaurants(locationName: string, query?: string): P
       // Foto do Google
       const photoName = place.photos?.[0]?.name;
       const imageUrl = photoName 
-        ? `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=400&maxWidthPx=600&key=${GOOGLE_MAPS_API_KEY}`
+        ? `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=800&maxWidthPx=800&key=${GOOGLE_MAPS_API_KEY}`
         : "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800";
 
       return {
@@ -585,6 +609,75 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
     const base = MOCK_RESTAURANTS.find(r => r.id === id);
     if (!base) return null;
     
+    // Tenta buscar os dados reais do restaurante mockado no Google Places
+    if (GOOGLE_MAPS_API_KEY) {
+      try {
+        const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+            "X-Goog-FieldMask": "places.id",
+          },
+          body: JSON.stringify({
+            textQuery: `${base.name} em ${base.city}, SP`,
+            maxResultCount: 1,
+            languageCode: "pt-BR",
+          }),
+        });
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          if (searchData.places && searchData.places.length > 0) {
+            const realId = searchData.places[0].id;
+            // Busca os detalhes usando o ID real
+            const realData = await fetch(`https://places.googleapis.com/v1/places/${realId}?languageCode=pt-BR`, {
+              method: "GET",
+              headers: {
+                "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+                "X-Goog-FieldMask": "id,displayName,rating,photos,formattedAddress,nationalPhoneNumber,location,reviews,addressComponents,regularOpeningHours,editorialSummary",
+              },
+              next: { revalidate: 3600 },
+            });
+            if (realData.ok) {
+              const place = await realData.json();
+              const addressComponents = place.addressComponents || [];
+              const cityComp = addressComponents.find((c: { types?: string[]; longText?: string }) => c?.types?.includes("locality"));
+              const stateComp = addressComponents.find((c: { types?: string[]; shortText?: string }) => c?.types?.includes("administrative_area_level_1"));
+              const city = cityComp?.longText || base.city;
+              const state = stateComp?.shortText || base.state;
+          
+              const photos = place.photos?.slice(0, 4).map((p: { name: string }) => 
+                `https://places.googleapis.com/v1/${p.name}/media?maxHeightPx=1080&maxWidthPx=1920&key=${GOOGLE_MAPS_API_KEY}`
+              ) || [base.image];
+          
+              return {
+                id: base.id, // Manter o ID do mock para não quebrar a navegação se necessário
+                name: place.displayName?.text || base.name,
+                city,
+                state,
+                rating: place.rating || base.rating,
+                distance: "Consulte no mapa",
+                image: photos[0],
+                openUntil: base.openUntil,
+                address: place.formattedAddress || `${city}, ${state}`,
+                phone: place.nationalPhoneNumber || "Não informado",
+                coordinates: { 
+                  lat: place.location?.latitude || -23.5505, 
+                  lng: place.location?.longitude || -46.6333 
+                },
+                photos,
+                description: place.editorialSummary?.text || "Um ambiente acolhedor oferecendo uma experiência gastronômica única, combinando sabores selecionados e um serviço cuidadoso.",
+                reviews: [], // Deixando as avaliações em branco como modelo para a API
+                openingHours: place.regularOpeningHours?.weekdayDescriptions || []
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Erro ao buscar dados reais para mock:", e);
+      }
+    }
+
     return {
       ...base,
       address: `Rua Principal, 1000 - Centro, ${base.city} - ${base.state}`,
@@ -597,11 +690,7 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
         "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800",
       ],
       description: "Um ambiente acolhedor e moderno, perfeito para encontrar amigos e familiares. Ingredientes selecionados e preparados com o maior cuidado para lhe proporcionar uma experiência inesquecível.",
-      reviews: [
-        { id: "r1", userName: "João Silva", rating: 5, comment: "Comida excelente e atendimento impecável! Voltarei com certeza.", date: "15/03/2026" },
-        { id: "r2", userName: "Maria Fernanda", rating: 4, comment: "Muito bom, o ambiente é super agradável. Faltou apenas uma sobremesa melhor.", date: "10/03/2026" },
-        { id: "r3", userName: "Carlos Eduardo", rating: 5, comment: "Sensacional! Pedimos o prato da casa e surpreendeu.", date: "02/03/2026" }
-      ]
+      reviews: [] // Deixando as avaliações em branco como modelo para a API
     };
   }
 
@@ -611,12 +700,13 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
   }
 
   try {
-    const response = await fetch(`https://places.googleapis.com/v1/places/${id}`, {
+    const response = await fetch(`https://places.googleapis.com/v1/places/${id}?languageCode=pt-BR`, {
       method: "GET",
       headers: {
         "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-        "X-Goog-FieldMask": "id,displayName,rating,photos,formattedAddress,nationalPhoneNumber,location,reviews,addressComponents",
+        "X-Goog-FieldMask": "id,displayName,rating,photos,formattedAddress,nationalPhoneNumber,location,reviews,addressComponents,regularOpeningHours,editorialSummary",
       },
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {
@@ -633,8 +723,8 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
     const state = stateComp?.shortText || "SP";
 
     const photos = place.photos?.slice(0, 4).map((p: { name: string }) => 
-      `https://places.googleapis.com/v1/${p.name}/media?maxHeightPx=800&maxWidthPx=1200&key=${GOOGLE_MAPS_API_KEY}`
-    ) || ["https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800"];
+      `https://places.googleapis.com/v1/${p.name}/media?maxHeightPx=1080&maxWidthPx=1920&key=${GOOGLE_MAPS_API_KEY}`
+    ) || ["https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1920"];
 
     return {
       id: place.id,
@@ -652,14 +742,9 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
         lng: place.location?.longitude || -46.6333 
       },
       photos,
-      description: "Informações completas carregadas via Google Places API.",
-      reviews: place.reviews?.slice(0, 3).map((r: { authorAttribution?: { displayName: string }; rating: number; text?: { text: string }; relativePublishTimeDescription?: string }, idx: number) => ({
-        id: `rev-${idx}`,
-        userName: r.authorAttribution?.displayName || "Usuário Google",
-        rating: r.rating,
-        comment: r.text?.text || "Sem comentário",
-        date: r.relativePublishTimeDescription || "Recentemente"
-      })) || []
+      description: place.editorialSummary?.text || "Um ambiente acolhedor oferecendo uma experiência gastronômica única, combinando sabores selecionados com um serviço especial para os clientes.",
+      reviews: [], // Deixando as avaliações em branco como modelo para a API
+      openingHours: place.regularOpeningHours?.weekdayDescriptions || []
     };
   } catch (error) {
     console.error("Erro no getRestaurantById (Google):", error);

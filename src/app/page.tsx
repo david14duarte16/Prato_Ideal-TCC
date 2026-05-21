@@ -23,6 +23,7 @@ export default async function Home(props: {
   let pizzaRestaurants: RestaurantCard[] = [];
   let sushiRestaurants: RestaurantCard[] = [];
   let healthyRestaurants: RestaurantCard[] = [];
+  let topRatedOpenRestaurants: RestaurantCard[] = [];
 
   try {
     if (isSearchMode) {
@@ -41,12 +42,13 @@ export default async function Home(props: {
     } else {
       // Modo Descoberta (Home)
       // Buscamos categorias em paralelo para os carrosséis
-      const [popular, burgers, pizzas, sushis, healthy] = await Promise.all([
+      const [popular, burgers, pizzas, sushis, healthy, topRatedOpenRaw] = await Promise.all([
         searchRestaurants(locationName, "Melhores restaurantes"),
         searchRestaurants(locationName, "Hambúrguer"),
         searchRestaurants(locationName, "Pizzaria"),
         searchRestaurants(locationName, "Japonês"),
-        searchRestaurants(locationName, "Saudável")
+        searchRestaurants(locationName, "Saudável"),
+        searchRestaurants(locationName, "Melhores bem avaliados", { openNow: true })
       ]);
       
       popularRestaurants = popular;
@@ -54,6 +56,7 @@ export default async function Home(props: {
       pizzaRestaurants = pizzas;
       sushiRestaurants = sushis;
       healthyRestaurants = healthy;
+      topRatedOpenRestaurants = topRatedOpenRaw.filter(r => r.rating && r.rating >= 4.5);
     }
   } catch (error) {
     console.error("Erro ao carregar restaurantes na Home:", error);
@@ -119,6 +122,12 @@ export default async function Home(props: {
 
             {/* Carousels */}
             <RestaurantCarousel 
+              title="Abertos Agora & Bem Avaliados" 
+              subtitle="Os melhores locais abertos neste momento."
+              restaurants={topRatedOpenRestaurants} 
+            />
+
+            <RestaurantCarousel 
               title="Mais Populares na Região" 
               subtitle="Os queridinhos da galera que você precisa conhecer."
               restaurants={popularRestaurants} 
@@ -149,7 +158,7 @@ export default async function Home(props: {
             />
             
             {/* Se mock data ou api falharem ou não voltarem nada, mostraremos um aviso amigável se todas estiverem vazias */}
-            {popularRestaurants.length === 0 && burgerRestaurants.length === 0 && pizzaRestaurants.length === 0 && sushiRestaurants.length === 0 && healthyRestaurants.length === 0 && (
+            {popularRestaurants.length === 0 && burgerRestaurants.length === 0 && pizzaRestaurants.length === 0 && sushiRestaurants.length === 0 && healthyRestaurants.length === 0 && topRatedOpenRestaurants.length === 0 && (
               <div className="text-center py-20 px-4 text-gray-500">
                 <p className="text-xl font-medium mb-2">Nenhum restaurante encontrado em {locationName}.</p>
                 <p>Tente buscar por outra cidade usando o seletor no topo.</p>

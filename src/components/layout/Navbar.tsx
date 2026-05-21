@@ -177,11 +177,12 @@ export default function Navbar() {
 
   return (
     <header 
+      id="main-nav"
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         scrolled ? "bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm" : "bg-white border-b border-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
+      <nav aria-label="Navegação principal" className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
         
         {/* Logo & Mock Indicator */}
         <div className="flex items-center gap-4">
@@ -208,7 +209,11 @@ export default function Navbar() {
         </div>
 
         {/* Unified Search Bar (Zomato Style) */}
-        <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
+        <div 
+          className="hidden md:flex flex-1 max-w-2xl mx-8 relative"
+          role="search"
+          aria-label="Busca de restaurantes e localidades"
+        >
           <div className="w-full flex items-center bg-white border border-gray-200 hover:border-gray-300 rounded-2xl h-14 transition-all duration-300 shadow-sm hover:shadow-md overflow-visible">
             
             {/* Location Section */}
@@ -243,7 +248,10 @@ export default function Navbar() {
                   }
                   setShowLocationDropdown(!showLocationDropdown);
                 }}
-                className="p-1 mr-2 hover:bg-gray-100 rounded-md transition-colors shrink-0"
+                aria-expanded={showLocationDropdown}
+                aria-haspopup="listbox"
+                aria-label="Selecionar localização"
+                className="p-1 mr-2 hover:bg-gray-100 rounded-md transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 {showLocationDropdown ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
               </button>
@@ -254,6 +262,7 @@ export default function Navbar() {
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
+                    role="listbox"
                     className="absolute left-0 top-[calc(100%+12px)] w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 overflow-hidden"
                   >
                     <button 
@@ -316,6 +325,7 @@ export default function Navbar() {
                   if (suggestions.length > 0 || searchQuery.length > 1) setShowSearchDropdown(true);
                 }}
                 placeholder="Procurar por um restaurante, prato ou culinária..."
+                aria-label="Procurar restaurante, prato ou culinária"
                 className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 h-full pl-3 pr-4"
               />
 
@@ -325,6 +335,7 @@ export default function Navbar() {
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
+                    role="listbox"
                     className="absolute right-0 top-[calc(100%+12px)] w-full bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 max-h-[400px] overflow-y-auto"
                   >
                     <div className="px-5 py-2">
@@ -390,7 +401,10 @@ export default function Navbar() {
             <div className="relative" ref={userMenuRef}>
               <button 
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
+                aria-expanded={showUserMenu}
+                aria-haspopup="menu"
+                aria-label="Menu do usuário"
+                className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200 focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 {session.user.image ? (
                   <Image src={session.user.image} alt={session.user.name || "User"} width={32} height={32} className="w-8 h-8 rounded-full border border-gray-200" />
@@ -476,7 +490,7 @@ export default function Navbar() {
           </button>
         </div>
 
-      </div>
+      </nav>
     </header>
   );
 }

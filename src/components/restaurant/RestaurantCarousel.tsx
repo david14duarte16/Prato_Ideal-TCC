@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-
+import { motion } from "framer-motion";
 import { RestaurantCard as RestaurantCardType } from "@/lib/services/restaurantService";
-import { Restaurant } from "@/lib/mockData";
 import RestaurantCard from "./RestaurantCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -12,6 +11,16 @@ interface RestaurantCarouselProps {
   title: string;
   subtitle?: string;
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
 
 export default function RestaurantCarousel({ restaurants, title, subtitle }: RestaurantCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -30,45 +39,48 @@ export default function RestaurantCarousel({ restaurants, title, subtitle }: Res
   if (!restaurants || restaurants.length === 0) return null;
 
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden">
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-hidden" aria-labelledby="carousel-title">
       <div className="flex items-end justify-between mb-6">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{title}</h2>
-          {subtitle && <p className="text-gray-500 mt-1 text-base">{subtitle}</p>}
+          <h2 id="carousel-title" className="text-[1.5rem] sm:text-[1.875rem] font-extrabold text-gray-900 tracking-tight">{title}</h2>
+          {subtitle && <p className="text-gray-500 mt-1 text-[1rem] font-medium">{subtitle}</p>}
         </div>
         
-        {/* Navigation Buttons (Hidden on very small screens, visible on md+) */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Navigation Buttons */}
+        <div className="hidden md:flex items-center gap-3">
           <button 
             onClick={() => scroll('left')}
-            className="p-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-red-500 transition-colors"
-            aria-label="Scroll left"
+            className="p-3 rounded-full border border-gray-200 text-gray-600 bg-white shadow-sm hover:bg-gray-50 hover:text-red-600 hover:border-red-100 transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/10"
+            aria-label="Rolar para a esquerda"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} aria-hidden="true" />
           </button>
           <button 
             onClick={() => scroll('right')}
-            className="p-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-red-500 transition-colors"
-            aria-label="Scroll right"
+            className="p-3 rounded-full border border-gray-200 text-gray-600 bg-white shadow-sm hover:bg-gray-50 hover:text-red-600 hover:border-red-100 transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/10"
+            aria-label="Rolar para a direita"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      <div className="relative">
-        <div 
+      <div className="relative" role="region" aria-label={`Carrossel de ${title}`}>
+        <motion.div 
           ref={scrollContainerRef}
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.1 }}
           className="flex overflow-x-auto gap-6 pb-6 pt-2 snap-x snap-mandatory hide-scrollbar w-full"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {restaurants.map((restaurant) => (
              <div key={restaurant.id} className="snap-start shrink-0 w-[280px] sm:w-[320px]">
-               {/* Casting the type to match what RestaurantCard expects */}
-               <RestaurantCard restaurant={restaurant as unknown as Restaurant} /> 
+               <RestaurantCard restaurant={restaurant} /> 
              </div>
           ))}
-        </div>
+        </motion.div>
       </div>
       
       {/* Hide scrollbar injected styles (better to have in global css, but keeping self-contained here) */}
