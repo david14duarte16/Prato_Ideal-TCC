@@ -40,6 +40,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
           />
           
           <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <Link href={`/restaurante/${restaurant.id}`} className="absolute inset-0 z-10" aria-hidden="true" tabIndex={-1} />
 
           <div 
             className="absolute top-5 left-5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-sm font-bold text-[0.875rem] flex items-center gap-1 text-gray-900 border border-white/20"
