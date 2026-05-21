@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, UtensilsCrossed, X, ArrowRight, UserPlus } from "lucide-react";
+import { Lock, X, ArrowRight, UserPlus } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -81,11 +82,16 @@ export default function AuthModal({ isOpen, onClose, message }: AuthModalProps) 
 
             {/* Icon Graphic */}
             <div className="flex justify-center mb-6">
-              <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-linear-to-tr from-orange-500/20 to-rose-500/20 border border-orange-500/30 animate-pulse">
-                <div className="absolute inset-2 rounded-full bg-linear-to-tr from-orange-500 to-rose-500 opacity-10 blur-md" />
-                <UtensilsCrossed className="w-8 h-8 text-orange-500" />
-                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center border border-zinc-950">
-                  <Lock size={12} className="text-white" />
+              <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-linear-to-tr from-[#B33817]/10 to-[#DD9318]/10 border border-[#B33817]/20 shadow-xl group">
+                <Image
+                  src="/logo-icon-128.png"
+                  alt="Logo Prato Ideal"
+                  width={44}
+                  height={44}
+                  className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+                />
+                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-linear-to-r from-[#B33817] to-[#DD9318] flex items-center justify-center border border-zinc-950 shadow-md">
+                  <Lock size={11} className="text-white" />
                 </div>
               </div>
             </div>

@@ -186,14 +186,19 @@ export default function Navbar() {
         
         {/* Logo & Mock Indicator */}
         <div className="flex items-center gap-4">
-          {/* ⬇️ LOGO PLACEHOLDER — Substitua pelo componente/imagem da sua logo */}
-          <Link href="/" className="shrink-0 flex items-center group">
-            <div className="flex items-center gap-2 px-3 py-1.5 border-2 border-dashed border-gray-300 rounded-xl hover:border-gray-400 transition-colors group-hover:bg-gray-50">
-              <div className="w-6 h-6 bg-gray-200 rounded-md" />
-              <span className="text-sm font-bold text-gray-400 tracking-wide uppercase">Minha Logo</span>
-            </div>
+          <Link href="/" className="shrink-0 flex items-center gap-2.5 group transition-all duration-300 hover:scale-[1.02]">
+            <Image
+              src="/logo-icon-48.png"
+              alt="Logo Prato Ideal"
+              width={40}
+              height={40}
+              className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+              priority
+            />
+            <span className="text-xl font-extrabold tracking-tight font-outfit bg-gradient-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent">
+              Prato Ideal
+            </span>
           </Link>
-          {/* ⬆️ FIM DO PLACEHOLDER */}
 
           {process.env.NEXT_PUBLIC_USE_MOCK === "true" && (
             <div className="flex animate-in fade-in slide-in-from-left-2 duration-700">
@@ -382,8 +387,13 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Right Navigation */}
         <div className="flex items-center gap-2 sm:gap-4">
+          <Link 
+            href="/" 
+            className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 hidden sm:block"
+          >
+            Home
+          </Link>
           <Link 
             href="/sobre" 
             className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 hidden sm:block"

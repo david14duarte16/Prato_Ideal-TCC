@@ -3,7 +3,7 @@
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { RestaurantDetails } from "@/lib/services/restaurantService";
-import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send } from "lucide-react";
+import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send, Share2 } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useSession, signIn } from "next-auth/react";
 import { useAuthModal } from "@/components/providers/AuthModalProvider";
@@ -138,6 +138,25 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
           </div>
           
           <div className="flex items-center gap-3">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                if (navigator.share) {
+                  navigator.share({
+                    title: `Conheça ${restaurant.name} no Prato Ideal!`,
+                    text: `Olha só esse restaurante incrível que eu encontrei!`,
+                    url: window.location.href,
+                  }).catch(console.error);
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Link copiado para a área de transferência!");
+                }
+              }}
+              className="p-3 rounded-xl backdrop-blur-md border border-white/10 bg-black/40 text-white hover:bg-black/60 transition-all shadow-lg flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-300"
+              aria-label="Compartilhar"
+            >
+              <Share2 size={24} />
+            </button>
             <button 
               onClick={(e) => {
                 if (status === "unauthenticated") {

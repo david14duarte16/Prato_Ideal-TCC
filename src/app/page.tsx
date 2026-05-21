@@ -1,6 +1,8 @@
 import Link from "next/link";
 import RestaurantGrid from "@/components/restaurant/RestaurantGrid";
 import RestaurantCarousel from "@/components/restaurant/RestaurantCarousel";
+import CollectionsSection from "@/components/home/CollectionsSection";
+import PromoBanner from "@/components/home/PromoBanner";
 import { searchRestaurants, RestaurantCard } from "@/lib/services/restaurantService";
 import { normalize } from "@/lib/utils";
 import { Restaurant, mockRestaurants } from "@/lib/mockData";
@@ -120,12 +122,16 @@ export default async function Home(props: {
               </p>
             </div>
 
+            <CollectionsSection />
+
             {/* Carousels */}
             <RestaurantCarousel 
               title="Abertos Agora & Bem Avaliados" 
               subtitle="Os melhores locais abertos neste momento."
               restaurants={topRatedOpenRestaurants} 
             />
+
+            <PromoBanner />
 
             <RestaurantCarousel 
               title="Mais Populares na Região" 

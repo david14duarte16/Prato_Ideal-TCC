@@ -29,25 +29,34 @@ export default function TermosDeUso() {
           <p className="text-gray-500 font-light">Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
         </motion.div>
 
-        <div className="space-y-8">
-          {sections.map((section, index) => (
-            <motion.section 
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-gray-50 p-8 rounded-3xl border border-transparent hover:border-red-100 transition-colors"
-            >
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <ChevronRight size={18} className="text-red-500" />
-                {section.title}
-              </h2>
-              <p className="text-gray-600 leading-relaxed">
-                {section.content}
-              </p>
-            </motion.section>
-          ))}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <p className="text-gray-600">
+            Abaixo você pode ler e fazer o download dos nossos Termos de Uso atualizados, que incluem nossa adequação rigorosa à LGPD.
+          </p>
+          <a 
+            href="/termos_de_uso_prato_ideal.pdf" 
+            download="Termos_de_Uso_Sabor_e_Cia.pdf"
+            className="shrink-0 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md"
+          >
+            <FileText size={20} />
+            Baixar PDF Completo
+          </a>
+        </div>
+
+        <div className="bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 h-[70vh] w-full shadow-inner relative">
+          <object 
+            data="/termos_de_uso_prato_ideal.pdf" 
+            type="application/pdf" 
+            className="w-full h-full"
+          >
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 p-8 text-center bg-gray-50">
+              <FileText size={48} className="mb-4 text-gray-300" />
+              <p className="mb-4 font-medium text-lg text-gray-700">Seu navegador não suporta visualização de PDF integrada.</p>
+              <a href="/termos_de_uso_prato_ideal.pdf" download className="text-red-500 font-bold hover:underline">
+                Clique aqui para baixar o arquivo
+              </a>
+            </div>
+          </object>
         </div>
 
         <motion.div 
@@ -56,7 +65,7 @@ export default function TermosDeUso() {
           className="mt-16 p-8 bg-gray-900 rounded-[2.5rem] text-white text-center"
         >
           <h3 className="text-xl font-bold mb-4">Dúvidas sobre nossos termos?</h3>
-          <p className="text-gray-400 mb-6 font-light">Entre em contato com nosso time jurídico para esclarecimentos adicionais.</p>
+          <p className="text-gray-400 mb-6 font-light">Entre em contato com nosso time jurídico para esclarecimentos adicionais ou requisições da LGPD.</p>
           <Link 
             href="/contato"
             className="inline-block bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition-colors"

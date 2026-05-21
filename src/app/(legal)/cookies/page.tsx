@@ -2,28 +2,64 @@
 
 import { motion } from "framer-motion";
 import { Cookie, Settings, Info, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function PoliticaCookies() {
+  const [preferences, setPreferences] = useState({
+    analytics: true,
+    marketing: true
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("cookie-preferences");
+    if (saved) {
+      try {
+        setPreferences(JSON.parse(saved));
+      } catch(e) {}
+    } else {
+      // Compatibility with banner
+      const bannerConsent = localStorage.getItem("cookie-consent");
+      if (bannerConsent === "necessary") {
+        setPreferences({ analytics: false, marketing: false });
+      }
+    }
+  }, []);
+
+  const togglePreference = (key: 'analytics' | 'marketing') => {
+    const newPrefs = { ...preferences, [key]: !preferences[key] };
+    setPreferences(newPrefs);
+    localStorage.setItem("cookie-preferences", JSON.stringify(newPrefs));
+    localStorage.setItem("cookie-consent", "custom");
+  };
+
   const cookieTypes = [
     { 
+      id: "necessary",
       title: "Necessários", 
       desc: "Essenciais para o funcionamento básico do site, como login e segurança.",
-      mandatory: true 
+      mandatory: true,
+      active: true,
     },
     { 
+      id: "preferences",
       title: "Preferências", 
       desc: "Lembram suas escolhas, como idioma preferido ou filtros de busca.",
-      mandatory: false 
+      mandatory: false,
+      active: true,
     },
     { 
+      id: "analytics",
       title: "Analíticos", 
       desc: "Nos ajudam a entender como os usuários interagem com as páginas para melhorarmos o serviço.",
-      mandatory: false 
+      mandatory: false,
+      active: preferences.analytics,
     },
     { 
+      id: "marketing",
       title: "Marketing", 
       desc: "Utilizados para exibir anúncios relevantes ao seu perfil de interesse.",
-      mandatory: false 
+      mandatory: false,
+      active: preferences.marketing,
     },
   ];
 
@@ -41,7 +77,7 @@ export default function PoliticaCookies() {
           <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-6">Política de Cookies</h1>
           <p className="text-gray-500 max-w-2xl mx-auto font-light leading-relaxed">
             Usamos pequenos arquivos chamados cookies para melhorar sua experiência. 
-            Você pode gerenciar quais tipos de cookies deseja permitir abaixo.
+            Você pode gerenciar quais tipos de cookies deseja permitir abaixo. Suas escolhas são salvas automaticamente.
           </p>
         </motion.div>
 
@@ -74,28 +110,17 @@ export default function PoliticaCookies() {
                 {cookie.mandatory ? (
                   <CheckCircle2 className="text-green-500" />
                 ) : (
-                  <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
-                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+                  <div 
+                    onClick={() => cookie.id === 'analytics' || cookie.id === 'marketing' ? togglePreference(cookie.id as any) : null}
+                    className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${cookie.active ? 'bg-red-500' : 'bg-gray-200'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${cookie.active ? 'left-7' : 'left-1'}`}></div>
                   </div>
                 )}
               </div>
             </motion.div>
           ))}
         </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="mt-12 p-6 bg-red-100 border-2 border-red-500 rounded-2xl flex items-center gap-4"
-        >
-          <div className="bg-red-500 p-2 rounded-full text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <div>
-            <h3 className="text-red-700 font-black uppercase tracking-tight">Red Flag: Pendência de Desenvolvimento</h3>
-            <p className="text-red-600 text-sm font-bold">Pesquisar e implementar funcionalidades de gerenciamento de cookies (Consent Management Platform).</p>
-          </div>
-        </motion.div>
 
         <motion.div 
           initial={{ opacity: 0 }}

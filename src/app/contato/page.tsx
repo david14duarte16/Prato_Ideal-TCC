@@ -35,7 +35,7 @@ export default function Contato() {
   };
 
   const contactInfo = [
-    { icon: <Mail className="text-red-500" />, title: "E-mail", detail: "contato@saborecia.com.br", sub: "Resposta em até 24h" },
+    { icon: <Mail className="text-red-500" />, title: "E-mail", detail: "contato@pratoideal.com.br", sub: "Resposta em até 24h" },
     { icon: <Phone className="text-green-500" />, title: "Telefone", detail: "+55 (11) 99876-5432", sub: "Seg-Sex, 9h às 18h" },
     { icon: <MapPin className="text-blue-500" />, title: "Endereço", detail: "Av. Paulista, 1000", sub: "São Paulo, SP" },
   ];

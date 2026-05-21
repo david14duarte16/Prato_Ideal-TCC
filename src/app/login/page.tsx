@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { UtensilsCrossed } from "lucide-react";
 import AuthForm from "./components/AuthForm";
 
@@ -17,12 +18,18 @@ export default function LoginPage() {
         />
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-between p-12">
-          <div className="flex items-center gap-3 animate-fade-in-right">
-            <div className="p-2 bg-orange-500/20 rounded-xl backdrop-blur-md border border-orange-500/30">
-              <UtensilsCrossed className="w-8 h-8 text-orange-500" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">Sabor&Arte</span>
-          </div>
+          <Link href="/" className="flex items-center gap-3.5 animate-fade-in-right group shrink-0 w-fit">
+            <Image
+              src="/logo-icon-128.png"
+              alt="Logo Prato Ideal"
+              width={48}
+              height={48}
+              className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+            />
+            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent font-outfit">
+              Prato Ideal
+            </span>
+          </Link>
 
           <div className="max-w-md animate-fade-in-up">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
@@ -39,12 +46,18 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative bg-zinc-950">
         
         {/* Mobile Header Logo */}
-        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-3">
-          <div className="p-2 bg-orange-500/20 rounded-xl backdrop-blur-md border border-orange-500/30">
-            <UtensilsCrossed className="w-6 h-6 text-orange-500" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">Sabor&Arte</span>
-        </div>
+        <Link href="/" className="absolute top-8 left-8 lg:hidden flex items-center gap-2.5 group">
+          <Image
+            src="/logo-icon-48.png"
+            alt="Logo Prato Ideal"
+            width={32}
+            height={32}
+            className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+          />
+          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent font-outfit">
+            Prato Ideal
+          </span>
+        </Link>
 
         {/* Separated Client Component */}
         <AuthForm />

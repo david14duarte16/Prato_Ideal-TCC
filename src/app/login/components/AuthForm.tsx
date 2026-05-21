@@ -11,6 +11,7 @@ interface AuthFormProps {
 
 export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
   const [isLogin, setIsLogin] = useState(defaultIsLogin);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const toggleMode = () => setIsLogin((prev) => !prev);
 
   const containerVariants = {
@@ -87,11 +88,29 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
               </motion.div>
             )}
 
+            <motion.div variants={itemVariants} className="flex items-center gap-2 mt-4">
+              <input 
+                type="checkbox" 
+                id="terms" 
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="w-4 h-4 rounded border-zinc-800 bg-zinc-900 text-orange-500 focus:ring-orange-500 focus:ring-offset-zinc-950"
+              />
+              <label htmlFor="terms" className="text-sm text-zinc-400">
+                Li e concordo com os <a href="/termos" target="_blank" className="text-orange-500 hover:underline">Termos de Uso</a> e a <a href="/privacidade" target="_blank" className="text-orange-500 hover:underline">Política de Privacidade</a>
+              </label>
+            </motion.div>
+
             <motion.button 
               variants={itemVariants}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="w-full bg-linear-to-r from-orange-500 to-rose-500 text-white rounded-2xl py-4 font-semibold shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 group hover:shadow-orange-500/40 transition-all outline-none"
+              whileHover={termsAccepted ? { scale: 1.01 } : {}}
+              whileTap={termsAccepted ? { scale: 0.99 } : {}}
+              disabled={!termsAccepted}
+              className={`w-full rounded-2xl py-4 font-semibold flex items-center justify-center gap-2 group transition-all outline-none ${
+                termsAccepted 
+                  ? "bg-linear-to-r from-orange-500 to-rose-500 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40" 
+                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+              }`}
             >
               {isLogin ? "Entrar" : "Criar conta"}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

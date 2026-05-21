@@ -11,6 +11,8 @@ export interface RestaurantCard {
   image: string;
   openUntil: string;
   openingHours?: string[]; // Array of weekday descriptions
+  category?: string;
+  discount_pratoideal?: string;
 }
 
 export interface ReviewItem {

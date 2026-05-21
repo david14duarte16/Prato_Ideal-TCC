@@ -3,7 +3,24 @@
 import { motion } from "framer-motion";
 import { Shield, Lock, Eye, Bell } from "lucide-react";
 
+import React, { useState } from "react";
+
+// inside the component:
 export default function PoliticaPrivacidade() {
+  const [lgpdEmail, setLgpdEmail] = useState("");
+  const [lgpdAction, setLgpdAction] = useState("export");
+  const [requestStatus, setRequestStatus] = useState<"idle" | "loading" | "success">("idle");
+
+  const handleLgpdRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRequestStatus("loading");
+    // Simulate API call
+    setTimeout(() => {
+      setRequestStatus("success");
+      setLgpdEmail("");
+    }, 1500);
+  };
+
   const topics = [
     { icon: <Eye size={20} />, title: "Quais dados coletamos?", content: "Coletamos informações que você nos fornece diretamente (como nome e e-mail no cadastro) e dados gerados pelo uso do site (como avaliações de restaurantes e localização aproximada)." },
     { icon: <Lock size={20} />, title: "Como protegemos você?", content: "Utilizamos criptografia de ponta a ponta e protocolos de segurança rigorosos para garantir que seus dados pessoais nunca sejam acessados por pessoas não autorizadas." },
@@ -55,24 +72,67 @@ export default function PoliticaPrivacidade() {
           whileInView={{ opacity: 1 }}
           className="mt-16 bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm"
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Compromisso com a LGPD</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Painel do Titular de Dados (LGPD)</h2>
           <p className="text-gray-600 leading-relaxed mb-6">
-            Estamos totalmente em conformidade com a Lei Geral de Proteção de Dados (LGPD). Isso significa que você tem o direito de saber quais dados temos, para que os usamos e pode solicitar mudanças a qualquer momento.
+            Utilize o formulário abaixo para exercer seus direitos como titular de dados. Você pode solicitar uma cópia de todos os seus dados armazenados ou pedir a exclusão permanente de sua conta.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <div>
-              <button className="bg-gray-900 text-white font-bold py-3 px-8 rounded-full hover:bg-gray-800 transition-colors">
-                Solicitar Meus Dados
-              </button>
-              <p className="text-[10px] text-red-400 mt-2 font-mono ml-2"># TODO: Implementar fluxo de exportação de dados (LGPD)</p>
-            </div>
-            <div>
-              <button className="border border-gray-200 text-gray-600 font-bold py-3 px-8 rounded-full hover:bg-gray-50 transition-colors">
-                Limpar Cookies
-              </button>
-              <p className="text-[10px] text-red-400 mt-2 font-mono ml-2"># TODO: Implementar lógica de limpeza de cookies e storage</p>
-            </div>
-          </div>
+
+          <form onSubmit={handleLgpdRequest} className="bg-gray-50 p-6 rounded-3xl border border-gray-200">
+            {requestStatus === "success" ? (
+              <div className="text-center p-6 bg-green-50 rounded-2xl border border-green-200">
+                <Shield size={32} className="text-green-500 mx-auto mb-3" />
+                <h3 className="text-green-800 font-bold text-lg mb-2">Solicitação Recebida!</h3>
+                <p className="text-green-700 text-sm">
+                  Sua requisição foi registrada com sucesso. Nossa equipe jurídica processará o pedido e enviará um retorno para o e-mail informado em até 72 horas úteis.
+                </p>
+                <button 
+                  type="button" 
+                  onClick={() => setRequestStatus("idle")}
+                  className="mt-4 text-green-600 font-bold hover:underline text-sm"
+                >
+                  Fazer nova solicitação
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">E-mail associado à conta</label>
+                  <input 
+                    type="email" 
+                    required
+                    value={lgpdEmail}
+                    onChange={(e) => setLgpdEmail(e.target.value)}
+                    placeholder="seu.email@exemplo.com"
+                    className="w-full p-3 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Tipo de Solicitação</label>
+                  <select 
+                    value={lgpdAction}
+                    onChange={(e) => setLgpdAction(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-white"
+                  >
+                    <option value="export">Baixar meus dados (Exportação)</option>
+                    <option value="delete">Excluir meus dados permanentemente</option>
+                  </select>
+                </div>
+                <div className="pt-2">
+                  <button 
+                    type="submit" 
+                    disabled={requestStatus === "loading"}
+                    className="w-full md:w-auto bg-gray-900 text-white font-bold py-3 px-8 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {requestStatus === "loading" ? (
+                      <>Processando...</>
+                    ) : (
+                      <>Enviar Solicitação LGPD</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </form>
         </motion.section>
       </div>
     </div>

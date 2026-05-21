@@ -3,7 +3,7 @@ import Link from "next/link";
 import { RestaurantCard as RestaurantType } from "@/lib/services/restaurantService";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useSession } from "next-auth/react";
-import { Heart, Star, MapPin, Clock } from "lucide-react";
+import { Heart, Star, MapPin, Clock, Share2, Percent, Tag } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuthModal } from "@/components/providers/AuthModalProvider";
@@ -49,7 +49,40 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
             <Star size={14} className="text-amber-500 fill-amber-500" aria-hidden="true" />
             <span>{restaurant.rating.toFixed(1)}</span>
           </div>
+
+          {restaurant.discount_pratoideal && (
+            <div 
+              className="absolute top-5 left-20 bg-red-600/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-sm font-bold text-[0.875rem] flex items-center gap-1 text-white border border-red-500/20"
+              role="img" 
+              aria-label={`Desconto Prato Ideal: ${restaurant.discount_pratoideal}`}
+            >
+              <Percent size={14} className="text-white" aria-hidden="true" />
+              <span>{restaurant.discount_pratoideal}</span>
+            </div>
+          )}
           
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (navigator.share) {
+                navigator.share({
+                  title: `Conheça ${restaurant.name} no Prato Ideal!`,
+                  text: `Encontrei este restaurante incrível. ${restaurant.discount_pratoideal ? 'E tem desconto especial com o código PratoIdeal!' : ''}`,
+                  url: `${window.location.origin}/restaurante/${restaurant.id}`,
+                }).catch((error) => console.log('Erro ao compartilhar', error));
+              } else {
+                navigator.clipboard.writeText(`${window.location.origin}/restaurante/${restaurant.id}`);
+                alert("Link copiado para a área de transferência!");
+              }
+            }}
+            className="absolute top-5 right-16 p-2.5 z-20 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 active:scale-90 bg-white/90 text-gray-400 hover:text-blue-500 hover:bg-white"
+            aria-label={`Compartilhar ${restaurant.name}`}
+          >
+            <Share2 size={18} aria-hidden="true" />
+          </button>
+
           <button 
             type="button"
             onClick={(e) => {
@@ -85,6 +118,12 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
           </h3>
           
           <div className="flex flex-col gap-2">
+            {restaurant.category && (
+              <div className="flex items-center gap-2 text-indigo-600 font-semibold text-[0.8125rem]" aria-label={`Categoria: ${restaurant.category}`}>
+                <Tag size={14} className="shrink-0" aria-hidden="true" />
+                <span>{restaurant.category}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-500 font-medium text-[0.8125rem]" aria-label={`Localização: ${restaurant.city}, distância: ${restaurant.distance}`}>
               <MapPin size={14} className="shrink-0 text-red-400" aria-hidden="true" />
               <span className="line-clamp-1">{restaurant.city} • {restaurant.distance}</span>

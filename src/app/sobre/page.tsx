@@ -44,7 +44,7 @@ export default function SobreNos() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto font-light"
           >
-            Ajudamos pessoas a descobrir experiências gastronômicas incríveis em todos os cantos do Brasil.
+            Ajudamos pessoas a descobrir experiências gastronômicas incríveis em todos os cantos de São Paulo.
           </motion.p>
         </div>
       </section>
@@ -61,7 +61,7 @@ export default function SobreNos() {
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">Quem Somos</h2>
             <div className="space-y-4 text-gray-600 leading-relaxed text-lg">
               <p>
-                O <strong>Sabor & Cia</strong> nasceu da paixão por boa comida e da dificuldade de encontrar lugares autênticos em cidades desconhecidas. Começamos como um pequeno blog de avaliações e hoje somos a maior plataforma de descoberta gastronômica do país.
+                O <strong>Prato Ideal</strong> nasceu da paixão por boa comida e da dificuldade de encontrar lugares autênticos em cidades desconhecidas. Começamos como um pequeno blog de avaliações e hoje somos a maior plataforma de descoberta gastronômica do país.
               </p>
               <p>
                 Acreditamos que cada refeição é uma oportunidade de criar memórias. Por isso, trabalhamos duro para garantir que nossas avaliações sejam transparentes e que nossos dados estejam sempre atualizados.
@@ -73,14 +73,39 @@ export default function SobreNos() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative h-[400px] rounded-3xl overflow-hidden shadow-2xl"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
           >
-            <Image
-              src="https://images.unsplash.com/photo-1550966842-28c46524d781?q=80&w=2070&auto=format&fit=crop"
-              alt="Equipe Sabor & Cia"
-              fill
-              className="object-cover"
-            />
+            {[
+              {
+                cargo: "Fiscal do Hambúrguer Artesanal",
+                frase: "“Se o pão desmonta, eu dou nota baixa.”"
+              },
+              {
+                cargo: "CEO das Sobremesas",
+                frase: "“Não confio em restaurante sem brownie.”"
+              },
+              {
+                cargo: "Analista de Molho da Casa",
+                frase: "“Pedi extra de molho por motivos profissionais.”"
+              },
+              {
+                cargo: "Diretora de Experiência de Rodízio",
+                frase: "“Avalio velocidade do garçom e reposição de frita.”"
+              }
+            ].map((perfil, index) => (
+              <div key={index} className="bg-gray-50 rounded-2xl p-5 flex flex-col items-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div className="w-20 h-20 bg-gray-200 rounded-full mb-3 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center shrink-0">
+                  <span className="text-gray-400 text-[10px] font-bold">FOTO</span>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="[NOME]" 
+                  className="bg-transparent font-bold text-gray-900 text-center w-full focus:outline-none mb-1 text-sm border-b border-dashed border-gray-300 focus:border-red-500 pb-1"
+                />
+                <span className="text-[10px] uppercase font-black tracking-widest text-red-500 mb-2">{perfil.cargo}</span>
+                <p className="text-xs text-gray-500 italic mt-auto px-1">{perfil.frase}</p>
+              </div>
+            ))}
           </motion.div>
         </div>
       </section>

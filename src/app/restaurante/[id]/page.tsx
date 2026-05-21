@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   if (!restaurant) {
     return {
-      title: "Restaurante não encontrado - Sabor & Cia",
+      title: "Restaurante não encontrado - Prato Ideal",
     };
   }
 
   return {
-    title: `${restaurant.name} - Sabor & Cia`,
+    title: `${restaurant.name} - Prato Ideal`,
     description: restaurant.description,
   };
 }

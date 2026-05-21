@@ -15,8 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Guia de Restaurantes",
+  title: "Prato Ideal",
   description: "Encontre os melhores restaurantes perto de você.",
+  icons: {
+    icon: "/logo-icon-32.png",
+    apple: "/logo-icon-128.png",
+  },
 };
 
 import Footer from "@/components/layout/Footer";
@@ -24,6 +28,8 @@ import VLibrasWidget from "@/components/accessibility/VLibrasWidget";
 import AccessibilityPanel from "@/components/accessibility/AccessibilityPanel";
 import AriaAnnouncer from "@/components/accessibility/AriaAnnouncer";
 import { AuthModalProvider } from "@/components/providers/AuthModalProvider";
+
+import CookieBanner from "@/components/layout/CookieBanner";
 
 export default function RootLayout({
   children,
@@ -44,6 +50,7 @@ export default function RootLayout({
             <Footer />
             <AccessibilityPanel />
             <VLibrasWidget />
+            <CookieBanner />
             <AriaAnnouncer />
           </AuthModalProvider>
         </AuthProvider>

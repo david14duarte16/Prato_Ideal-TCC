@@ -275,7 +275,7 @@ export default function PerfilPage() {
             >
               <h3 className="text-xl font-bold text-gray-900 mb-4">Sobre mim</h3>
               <p className="text-gray-600 leading-relaxed font-light">
-                {session ? "Explorador da gastronomia digital testando o novo sistema Sabor & Cia. 🚀" : "Visitante anônimo validando dados de interface local."}
+                {session ? "Explorador da gastronomia digital testando o novo sistema Prato Ideal. 🚀" : "Visitante anônimo validando dados de interface local."}
               </p>
               
               <div className="grid grid-cols-2 gap-4 mt-8">
