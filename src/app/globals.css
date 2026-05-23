@@ -19,22 +19,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #1f2937;
-    --muted-foreground: #9ca3af;
-    --primary: #ef4444;
-    --primary-foreground: #ffffff;
-    --border: #27272a;
-    --ring: rgba(239, 68, 68, 0.3);
-  }
+@custom-variant dark (&:is(.dark *));
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+  --primary: #ef4444;
+  --primary-foreground: #ffffff;
+  --border: #27272a;
+  --ring: rgba(239, 68, 68, 0.3);
 }
 
-/* Modo Alto Contraste (WCAG AAA) - Paleta Limpa e Profissional */
+/* Modo Alto Contraste (WCAG AAA) - Paleta Limpa e Segura */
 html.high-contrast {
-  --background: #121212;
+  --background: #000000;
   --foreground: #ffffff;
   --muted: #000000;
   --muted-foreground: #dddddd;
@@ -42,6 +42,35 @@ html.high-contrast {
   --primary-foreground: #000000;
   --border: #ffffff;
   --ring: #FFD500;
+}
+
+/* Sobrescrever classes de utilidade do Tailwind que forçam fundos claros/escuros no modo alto contraste */
+html.high-contrast body,
+html.high-contrast .bg-white,
+html.high-contrast .bg-gray-50,
+html.high-contrast .bg-zinc-50,
+html.high-contrast .dark\:bg-zinc-950,
+html.high-contrast .dark\:bg-zinc-900,
+html.high-contrast .bg-zinc-950,
+html.high-contrast .bg-zinc-900 {
+  background-color: var(--background) !important;
+}
+
+/* Forçar cores de texto que estavam engessadas */
+html.high-contrast .text-gray-900,
+html.high-contrast .text-gray-800,
+html.high-contrast .text-gray-600,
+html.high-contrast .text-gray-500,
+html.high-contrast .dark\:text-white,
+html.high-contrast .dark\:text-gray-100,
+html.high-contrast .dark\:text-gray-300,
+html.high-contrast .dark\:text-gray-400 {
+  color: var(--foreground) !important;
+}
+
+html.high-contrast a,
+html.high-contrast button {
+  color: var(--primary) !important;
 }
 
 html {
@@ -102,15 +131,6 @@ html.high-contrast :focus-visible {
   top: 0;
 }
 
-/* Alto Contraste: Ajustes Específicos Globais sem !important destrutivos */
-html.high-contrast * {
-  border-color: var(--border);
-}
-html.high-contrast img, 
-html.high-contrast svg {
-  filter: contrast(1.2);
-}
-
 /* Fonte para Dislexia */
 html.dyslexia-font body {
   font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
@@ -137,3 +157,36 @@ html.dyslexia-font body {
   }
 }
 
+/* Pausar Animações Manual */
+html.pause-animations *,
+html.pause-animations ::before,
+html.pause-animations ::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Destacar Links */
+html.highlight-links a,
+html.highlight-links button {
+  text-decoration: underline !important;
+  text-decoration-thickness: 3px !important;
+  text-underline-offset: 4px !important;
+  background-color: rgba(255, 255, 0, 0.2) !important;
+}
+html.high-contrast.highlight-links a,
+html.high-contrast.highlight-links button {
+  background-color: transparent !important;
+}
+
+/* Espaçamento de Texto */
+html.text-spacing body {
+  line-height: 2 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+html.text-spacing p,
+html.text-spacing span,
+html.text-spacing li {
+  margin-bottom: 1em !important;
+}

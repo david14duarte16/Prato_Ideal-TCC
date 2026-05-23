@@ -41,7 +41,7 @@ export default function Contato() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-32 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 pt-32 pb-20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div 
@@ -49,10 +49,10 @@ export default function Contato() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">
             Fale com <span className="text-red-500">Gente</span>
           </h1>
-          <p className="text-lg text-gray-500 font-light">
+          <p className="text-lg text-gray-500 dark:text-gray-400 font-light">
             Dúvidas, sugestões ou apenas quer bater um papo sobre gastronomia? 
             Estamos aqui para ouvir você.
           </p>
@@ -71,15 +71,15 @@ export default function Contato() {
                 key={idx}
                 variants={itemVariants}
                 whileHover={{ x: 10 }}
-                className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-start gap-4 transition-all duration-300"
+                className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm flex items-start gap-4 transition-all duration-300"
               >
-                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center shrink-0">
                   {info.icon}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">{info.title}</h3>
-                  <p className="text-gray-700 font-medium">{info.detail}</p>
-                  <p className="text-xs text-gray-400 mt-1">{info.sub}</p>
+                  <h3 className="font-bold text-gray-900 dark:text-white">{info.title}</h3>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">{info.detail}</p>
+                  <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">{info.sub}</p>
                 </div>
               </motion.div>
             ))}
@@ -92,28 +92,28 @@ export default function Contato() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="lg:col-span-2 bg-white p-8 md:p-12 rounded-[2.5rem] border border-gray-100 shadow-xl"
+            className="lg:col-span-2 bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 shadow-xl dark:shadow-none"
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">Nome Completo</label>
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Nome Completo</label>
                   <input 
                     required
                     type="text" 
                     placeholder="Como podemos te chamar?"
-                    className="w-full bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white outline-none rounded-2xl px-6 py-4 transition-all duration-300 placeholder-gray-300 text-gray-700"
+                    className="w-full bg-gray-50 dark:bg-zinc-950 border border-transparent dark:border-zinc-800 focus:border-red-500 focus:bg-white dark:focus:bg-zinc-900 outline-none rounded-2xl px-6 py-4 transition-all duration-300 placeholder-gray-300 dark:placeholder-zinc-600 text-gray-700 dark:text-white"
                     value={formState.name}
                     onChange={(e) => setFormState({...formState, name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">E-mail</label>
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">E-mail</label>
                   <input 
                     required
                     type="email" 
                     placeholder="Seu melhor e-mail"
-                    className="w-full bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white outline-none rounded-2xl px-6 py-4 transition-all duration-300 placeholder-gray-300 text-gray-700"
+                    className="w-full bg-gray-50 dark:bg-zinc-950 border border-transparent dark:border-zinc-800 focus:border-red-500 focus:bg-white dark:focus:bg-zinc-900 outline-none rounded-2xl px-6 py-4 transition-all duration-300 placeholder-gray-300 dark:placeholder-zinc-600 text-gray-700 dark:text-white"
                     value={formState.email}
                     onChange={(e) => setFormState({...formState, email: e.target.value})}
                   />
@@ -121,12 +121,12 @@ export default function Contato() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 ml-1">Mensagem</label>
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Mensagem</label>
                 <textarea 
                   required
                   rows={5}
                   placeholder="Conte-nos tudo..."
-                  className="w-full bg-gray-50 border border-transparent focus:border-red-500 focus:bg-white outline-none rounded-2xl px-6 py-4 transition-all duration-300 placeholder-gray-300 text-gray-700 resize-none"
+                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-transparent dark:border-zinc-800 focus:border-red-500 focus:bg-white dark:focus:bg-zinc-900 outline-none rounded-2xl px-6 py-4 transition-all duration-300 placeholder-gray-300 dark:placeholder-zinc-600 text-gray-700 dark:text-white resize-none"
                   value={formState.message}
                   onChange={(e) => setFormState({...formState, message: e.target.value})}
                 />

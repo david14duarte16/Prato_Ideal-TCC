@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/render/:path*',
+        destination: 'https://apirestaurantes.onrender.com/api/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -52,7 +60,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://places.googleapis.com https://maps.googleapis.com ws: wss:; frame-src 'self' https://www.google.com https://maps.google.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vlibras.gov.br; style-src 'self' 'unsafe-inline' https://vlibras.gov.br; img-src 'self' data: blob: https:; font-src 'self' data: https://vlibras.gov.br; connect-src 'self' https://places.googleapis.com https://maps.googleapis.com ws: wss: https://vlibras.gov.br; frame-src 'self' https://www.google.com https://maps.google.com;",
           },
         ],
       },

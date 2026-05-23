@@ -179,7 +179,7 @@ export default function Navbar() {
     <header 
       id="main-nav"
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm" : "bg-white border-b border-transparent"
+        scrolled ? "bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-200 dark:border-zinc-800 shadow-sm" : "bg-white dark:bg-zinc-950 border-b border-transparent"
       }`}
     >
       <nav aria-label="Navegação principal" className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
@@ -219,7 +219,7 @@ export default function Navbar() {
           role="search"
           aria-label="Busca de restaurantes e localidades"
         >
-          <div className="w-full flex items-center bg-white border border-gray-200 hover:border-gray-300 rounded-2xl h-14 transition-all duration-300 shadow-sm hover:shadow-md overflow-visible">
+          <div className="w-full flex items-center bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 rounded-2xl h-14 transition-all duration-300 shadow-sm hover:shadow-md dark:shadow-none overflow-visible">
             
             {/* Location Section */}
             <div ref={locationRef} className="relative flex items-center h-full flex-[0.4] min-w-[150px]">
@@ -244,7 +244,7 @@ export default function Navbar() {
                   }, 200);
                 }}
                 placeholder={location}
-                className="w-full bg-transparent text-sm font-medium outline-none text-gray-700 placeholder-gray-500 pl-2 pr-2"
+                className="w-full bg-transparent text-sm font-medium outline-none text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 pl-2 pr-2"
               />
               <button 
                 onClick={() => {
@@ -256,7 +256,7 @@ export default function Navbar() {
                 aria-expanded={showLocationDropdown}
                 aria-haspopup="listbox"
                 aria-label="Selecionar localização"
-                className="p-1 mr-2 hover:bg-gray-100 rounded-md transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-red-500"
+                className="p-1 mr-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 {showLocationDropdown ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
               </button>
@@ -268,13 +268,13 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
                     role="listbox"
-                    className="absolute left-0 top-[calc(100%+12px)] w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 overflow-hidden"
+                    className="absolute left-0 top-[calc(100%+12px)] w-80 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl dark:shadow-none border border-gray-100 dark:border-zinc-800 py-3 z-50 overflow-hidden"
                   >
                     <button 
                       onClick={detectLocation}
-                      className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 mb-2 group"
+                      className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left border-b border-gray-50 dark:border-zinc-800 mb-2 group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                      <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
                         <Navigation size={18} className={isDetecting ? "animate-spin" : ""} />
                       </div>
                       <div>
@@ -293,12 +293,12 @@ export default function Navbar() {
                               selectLocation(loc.short);
                               setLocationInput(loc.short);
                             }}
-                            className="w-full flex items-center gap-3 py-3 text-sm text-gray-600 hover:text-red-500 transition-colors border-b border-gray-50 last:border-0 group/loc"
+                            className="w-full flex items-center gap-3 py-3 text-sm text-gray-600 dark:text-gray-400 hover:text-red-500 transition-colors border-b border-gray-50 dark:border-zinc-800/50 last:border-0 group/loc"
                           >
-                            <MapPin size={14} className="text-gray-300 group-hover/loc:text-red-400" />
+                            <MapPin size={14} className="text-gray-300 dark:text-zinc-600 group-hover/loc:text-red-400" />
                             <div className="flex flex-col">
-                              <span className="font-bold text-gray-800 group-hover/loc:text-red-500 transition-colors">{loc.short}</span>
-                              <span className="text-[10px] text-gray-400">{loc.name.split(',')[1] || 'S/N'}</span>
+                              <span className="font-bold text-gray-800 dark:text-gray-200 group-hover/loc:text-red-500 transition-colors">{loc.short}</span>
+                              <span className="text-[10px] text-gray-400 dark:text-zinc-500">{loc.name.split(',')[1] || 'S/N'}</span>
                             </div>
                           </button>
                         ))}
@@ -316,7 +316,7 @@ export default function Navbar() {
             </div>
 
             {/* Vertical Divider */}
-            <div className="h-6 w-px bg-gray-300 mx-2 shrink-0" />
+            <div className="h-6 w-px bg-gray-300 dark:bg-zinc-700 mx-2 shrink-0" />
 
             {/* Search Section */}
             <div ref={searchRef} className="relative flex items-center h-full flex-1">
@@ -331,7 +331,7 @@ export default function Navbar() {
                 }}
                 placeholder="Procurar por um restaurante, prato ou culinária..."
                 aria-label="Procurar restaurante, prato ou culinária"
-                className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 h-full pl-3 pr-4"
+                className="w-full bg-transparent outline-none text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 h-full pl-3 pr-4"
               />
 
               <AnimatePresence>
@@ -341,7 +341,7 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
                     role="listbox"
-                    className="absolute right-0 top-[calc(100%+12px)] w-full bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 max-h-[400px] overflow-y-auto"
+                    className="absolute right-0 top-[calc(100%+12px)] w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl dark:shadow-none border border-gray-100 dark:border-zinc-800 py-3 z-50 max-h-[400px] overflow-y-auto"
                   >
                     <div className="px-5 py-2">
                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Resultados Encontrados</p>
@@ -353,14 +353,14 @@ export default function Navbar() {
                               setSearchQuery(res.name);
                               handleSearch();
                             }}
-                            className="w-full flex items-center gap-4 py-2 hover:bg-gray-50 rounded-xl transition-colors text-left group"
+                            className="w-full flex items-center gap-4 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors text-left group"
                           >
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 shrink-0">
                               <Image src={res.image} alt={res.name} fill sizes="48px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-bold text-gray-900 truncate">{res.name}</h4>
+                                <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{res.name}</h4>
                                 <div className="flex items-center gap-1 text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-bold">
                                   {res.rating ? res.rating.toFixed(1) : "N/A"} <Star size={8} fill="currentColor" />
                                 </div>
@@ -371,10 +371,10 @@ export default function Navbar() {
                         ))}
                         {suggestions.length === 0 && searchQuery.length > 1 && (
                           <div className="flex flex-col items-center justify-center py-6 text-center">
-                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                              <Search size={20} className="text-gray-300" />
+                            <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800/50 rounded-full flex items-center justify-center mb-3">
+                              <Search size={20} className="text-gray-300 dark:text-gray-600" />
                             </div>
-                            <p className="text-sm font-bold text-gray-900">Nenhum resultado encontrado</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">Nenhum resultado encontrado</p>
                             <p className="text-xs text-gray-400 mt-1">Tente buscar por outro nome ou prato</p>
                           </div>
                         )}
@@ -390,19 +390,19 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           <Link 
             href="/" 
-            className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 hidden sm:block"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 hidden sm:block"
           >
             Home
           </Link>
           <Link 
             href="/sobre" 
-            className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 hidden sm:block"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 hidden sm:block"
           >
             Sobre Nós
           </Link>
           <Link 
             href="/contato" 
-            className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 hidden sm:block"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 hidden sm:block"
           >
             Contato
           </Link>
@@ -414,7 +414,7 @@ export default function Navbar() {
                 aria-expanded={showUserMenu}
                 aria-haspopup="menu"
                 aria-label="Menu do usuário"
-                className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200 focus-visible:ring-2 focus-visible:ring-red-500"
+                className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-zinc-700 focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 {session.user.image ? (
                   <Image src={session.user.image} alt={session.user.name || "User"} width={32} height={32} className="w-8 h-8 rounded-full border border-gray-200" />
@@ -436,18 +436,18 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-3 z-50 overflow-hidden"
+                    className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl dark:shadow-none border border-gray-100 dark:border-zinc-800 py-3 z-50 overflow-hidden"
                   >
-                  <div className="px-5 py-3 border-b border-gray-50 mb-2">
-                    <p className="text-sm font-black text-gray-900 truncate">{session.user.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+                  <div className="px-5 py-3 border-b border-gray-50 dark:border-zinc-800/50 mb-2">
+                    <p className="text-sm font-black text-gray-900 dark:text-white truncate">{session.user.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{session.user.email}</p>
                   </div>
                   
                   <div className="px-2 space-y-1">
                     <Link 
                       href="/perfil"
                       onClick={() => setShowUserMenu(false)}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-red-500 rounded-xl transition-all flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:text-red-500 dark:hover:text-red-500 rounded-xl transition-all flex items-center gap-2"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       Meu Perfil
@@ -455,21 +455,25 @@ export default function Navbar() {
                       <Link 
                         href="/favoritos"
                         onClick={() => setShowUserMenu(false)}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-red-500 rounded-xl transition-all flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:text-red-500 dark:hover:text-red-500 rounded-xl transition-all flex items-center gap-2"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         Favoritos
                       </Link>
-                      <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-red-500 rounded-xl transition-all flex items-center gap-2">
+                      <Link 
+                        href="/configuracoes"
+                        onClick={() => setShowUserMenu(false)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 hover:text-red-500 dark:hover:text-red-500 rounded-xl transition-all flex items-center gap-2"
+                      >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                         Configurações
-                      </button>
+                      </Link>
                     </div>
 
-                    <div className="border-t border-gray-50 mt-2 pt-2 px-2">
+                    <div className="border-t border-gray-50 dark:border-zinc-800/50 mt-2 pt-2 px-2">
                       <button 
                         onClick={() => signOut()}
-                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-xl font-bold transition-all flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl font-bold transition-all flex items-center gap-2"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                         Sair da Conta
@@ -483,7 +487,7 @@ export default function Navbar() {
             <>
               <Link 
                 href="/login" 
-                className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 hidden sm:block"
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors py-2 px-4 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 hidden sm:block"
               >
                 Log in
               </Link>
@@ -497,7 +501,7 @@ export default function Navbar() {
           )}
 
           {/* Mobile Menu */}
-          <button className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+          <button className="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
             </svg>

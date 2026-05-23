@@ -72,19 +72,19 @@ export default async function Home(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 pt-20">
       {/* Breadcrumb Bar */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/" className="hover:text-red-500 transition-colors font-medium text-gray-600">
+      <div className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <Link href="/" className="hover:text-red-500 transition-colors font-medium text-gray-600 dark:text-gray-300">
             Início
           </Link>
           {(searchParams.loc || query) && (
             <>
-              <span className="text-gray-300">/</span>
+              <span className="text-gray-300 dark:text-gray-600">/</span>
               <Link
                 href={`/?loc=${locationName}`}
-                className="hover:text-red-500 transition-colors text-gray-600 font-medium"
+                className="hover:text-red-500 transition-colors text-gray-600 dark:text-gray-300 font-medium"
               >
                 {locationName}
               </Link>
@@ -92,8 +92,8 @@ export default async function Home(props: {
           )}
           {query && (
             <>
-              <span className="text-gray-300">/</span>
-              <span className="text-gray-400 italic">
+              <span className="text-gray-300 dark:text-gray-600">/</span>
+              <span className="text-gray-400 dark:text-gray-500 italic">
                 Restaurantes com &ldquo;{query}&rdquo;
               </span>
             </>
@@ -114,10 +114,10 @@ export default async function Home(props: {
           <div className="w-full">
             {/* Hero Section */}
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 text-center">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">
                 Descubra os melhores sabores em <span className="text-red-500">{locationName}</span>
               </h1>
-              <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
                 Explore restaurantes super bem avaliados, de lanches rápidos a jantares sofisticados, todos próximos de você.
               </p>
             </div>
@@ -165,7 +165,7 @@ export default async function Home(props: {
             
             {/* Se mock data ou api falharem ou não voltarem nada, mostraremos um aviso amigável se todas estiverem vazias */}
             {popularRestaurants.length === 0 && burgerRestaurants.length === 0 && pizzaRestaurants.length === 0 && sushiRestaurants.length === 0 && healthyRestaurants.length === 0 && topRatedOpenRestaurants.length === 0 && (
-              <div className="text-center py-20 px-4 text-gray-500">
+              <div className="text-center py-20 px-4 text-gray-500 dark:text-gray-400">
                 <p className="text-xl font-medium mb-2">Nenhum restaurante encontrado em {locationName}.</p>
                 <p>Tente buscar por outra cidade usando o seletor no topo.</p>
               </div>

@@ -14,14 +14,14 @@ export default function FavoritosPage() {
 
   if (status === "loading" || !isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
       <Navbar />
       
       <main className="pt-32 pb-20 container mx-auto px-4 max-w-5xl">
@@ -29,7 +29,7 @@ export default function FavoritosPage() {
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-black text-gray-900 font-outfit mb-4 flex items-center justify-center md:justify-start gap-3"
+            className="text-4xl font-black text-gray-900 dark:text-white font-outfit mb-4 flex items-center justify-center md:justify-start gap-3"
           >
             <Heart className="text-red-500 fill-red-500 w-10 h-10" />
             Meus Favoritos
@@ -38,7 +38,7 @@ export default function FavoritosPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-gray-500 text-lg"
+            className="text-gray-500 dark:text-gray-400 text-lg"
           >
             Todos os seus restaurantes salvos em um só lugar.
           </motion.p>
@@ -48,13 +48,13 @@ export default function FavoritosPage() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-[3rem] shadow-sm border border-gray-100 p-16 text-center max-w-2xl mx-auto"
+            className="bg-white dark:bg-zinc-900 rounded-[3rem] shadow-sm border border-gray-100 dark:border-zinc-800 p-16 text-center max-w-2xl mx-auto"
           >
-            <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Heart size={40} className="text-red-300" />
+            <div className="w-24 h-24 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Heart size={40} className="text-red-300 dark:text-red-500" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Nenhum favorito ainda</h2>
-            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Nenhum favorito ainda</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
               Explore o Prato Ideal e clique no coração nos restaurantes que mais gostar para salvá-los aqui!
             </p>
             <Link 
@@ -78,7 +78,7 @@ export default function FavoritosPage() {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Link href={`/restaurante/${fav.place_id}`} className="group block h-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 rounded-[1.5rem] relative">
-                    <article className="bg-white rounded-[1.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col">
+                    <article className="bg-white dark:bg-zinc-900 rounded-[1.5rem] border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-red-500/10 transition-all duration-300 h-full flex flex-col">
                       <div className="relative h-48 w-full overflow-hidden">
                         <Image 
                           src={fav.image} 
@@ -89,11 +89,11 @@ export default function FavoritosPage() {
                         />
                       </div>
                       <div className="p-6 flex flex-col grow">
-                        <h3 className="font-outfit font-extrabold text-xl text-gray-900 mb-2 line-clamp-1 group-hover:text-red-500 transition-colors">
+                        <h3 className="font-outfit font-extrabold text-xl text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-red-500 transition-colors">
                           {fav.name}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 mt-auto pt-4 font-medium justify-between">
-                          <span className="flex items-center gap-1 text-red-500 font-bold bg-red-50 px-3 py-1.5 rounded-xl group-hover:bg-red-500 group-hover:text-white transition-colors">
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-auto pt-4 font-medium justify-between">
+                          <span className="flex items-center gap-1 text-red-500 font-bold bg-red-50 dark:bg-red-500/10 px-3 py-1.5 rounded-xl group-hover:bg-red-500 group-hover:text-white transition-colors">
                             Ver Detalhes <ChevronRight size={16} />
                           </span>
                         </div>

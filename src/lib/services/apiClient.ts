@@ -1,9 +1,12 @@
 import axios from 'axios';
-import { getRestaurantById, RestaurantDetails } from '../lib/services/restaurantService';
+import { getRestaurantById, RestaurantDetails } from './restaurantService';
 import { Favorite } from '../types';
 
+const isServer = typeof window === 'undefined';
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  // No servidor, acessa a API direto. No navegador, usa o Proxy do Next.js para evitar CORS.
+  baseURL: isServer ? 'https://apirestaurantes.onrender.com/api' : '/api/render',
   headers: {
     'Content-Type': 'application/json',
   },

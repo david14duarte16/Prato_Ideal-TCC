@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { mockFavoritesAPIResponse } from "../../services/mockData";
-import { apiClient } from "../../services/apiClient";
+import { mockFavoritesAPIResponse } from "../mockData";
+import { apiClient } from "../services/apiClient";
 import { announce } from "../../components/accessibility/AriaAnnouncer";
 
 export interface FavoriteItem {
@@ -13,6 +13,7 @@ export interface FavoriteItem {
   image: string;
 }
 
+// Fallback to local storage only while API is disconnected
 export function useFavorites() {
   const { data: session } = useSession();
 
@@ -20,29 +21,18 @@ export function useFavorites() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchFavorites = async () => {
+    const fetchFavorites = () => {
       try {
-        if (session || true) { // Forçando o teste local
-          // Fake Backend DB (Local Storage)
-          const localDb = localStorage.getItem('saborcia_mock_db_favorites');
-          if (localDb) {
-            setFavorites(JSON.parse(localDb));
-          } else {
-            // Initial mock data se for a primeira vez
-            const initialFavs = mockFavoritesAPIResponse.map(f => ({
-              id: f.place_id,
-              place_id: f.place_id,
-              name: "Restaurante (Load via Mock DB)",
-              image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800"
-            }));
-            setFavorites(initialFavs);
-            localStorage.setItem('saborcia_mock_db_favorites', JSON.stringify(initialFavs));
-          }
+        const userId = session?.user?.email || "guest";
+        const stored = localStorage.getItem(`saborcia_favorites_${userId}`);
+        if (stored) {
+          setFavorites(JSON.parse(stored));
         } else {
           setFavorites([]);
         }
       } catch (error) {
-        console.error("Failed to fetch favorites from API", error);
+        console.error("Failed to load favorites from localStorage", error);
+        setFavorites([]);
       } finally {
         setIsLoaded(true);
       }
@@ -57,40 +47,26 @@ export function useFavorites() {
       e.stopPropagation();
     }
     
-    // Otimistic UI Update & Fake DB Backup
-    setFavorites(prev => {
-      const exists = prev.some(f => f.place_id === item.place_id || f.id === item.id);
-      const newState = exists 
-        ? prev.filter(f => f.place_id !== item.place_id && f.id !== item.id)
-        : [...prev, item];
+    const exists = favorites.some(f => f.place_id === item.place_id || f.id === item.id);
+    const message = exists 
+      ? `${item.name} removido dos favoritos` 
+      : `${item.name} adicionado aos favoritos`;
       
-      // Save to our 'fake database'
-      localStorage.setItem('saborcia_mock_db_favorites', JSON.stringify(newState));
+    const nextFavorites = exists 
+      ? favorites.filter(f => f.place_id !== item.place_id && f.id !== item.id)
+      : [...favorites, item];
       
-      const message = exists 
-        ? `${item.name} removido dos favoritos` 
-        : `${item.name} adicionado aos favoritos`;
-      announce(message);
-
-      return newState;
-    });
-
+    setFavorites(nextFavorites);
+    
+    // Save to localStorage
     try {
-      const exists = favorites.some(f => f.place_id === item.place_id || f.id === item.id);
-      
-      if (exists) {
-        // Exemplo: DELETE request
-        // await apiClient.delete(`/favorites/${item.place_id}`);
-        console.log(`[Mock API] DELETE /api/favorites/${item.place_id}`);
-      } else {
-        // Exemplo: POST request
-        // await apiClient.post('/favorites', { place_id: item.place_id });
-        console.log(`[Mock API] POST /api/favorites`, { place_id: item.place_id });
-      }
-    } catch (error) {
-      console.error("Failed to save favorite in backend", error);
-      // Aqui reverteríamos o optimistic update se necessário.
+      const userId = session?.user?.email || "guest";
+      localStorage.setItem(`saborcia_favorites_${userId}`, JSON.stringify(nextFavorites));
+    } catch (err) {
+      console.error("Failed to save favorites to localStorage", err);
     }
+
+    setTimeout(() => announce(message), 0);
   };
 
   const isFavorite = (id: string) => favorites.some(f => f.place_id === id || f.id === id);

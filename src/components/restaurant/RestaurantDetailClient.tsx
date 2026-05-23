@@ -3,12 +3,13 @@
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { RestaurantDetails } from "@/lib/services/restaurantService";
-import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send, Share2 } from "lucide-react";
+import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send, Share2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useSession, signIn } from "next-auth/react";
 import { useAuthModal } from "@/components/providers/AuthModalProvider";
-
+import { apiClient } from "@/lib/services/apiClient";
 import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/Toast";
 
 interface Props {
   restaurant: RestaurantDetails;
@@ -56,49 +57,154 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
     setLocalReviews(restaurant.reviews || []);
   }
 
-  const [newReview, setNewReview] = useState({ rating: 5, comment: "", userName: "" });
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "", userName: "", file: null as File | null });
   const [showReviewForm, setShowReviewForm] = useState(false);
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+
+  const allReviewPhotos = localReviews?.flatMap(r => r.photos || []) || [];
+
+  const openLightbox = (photoUrl: string) => {
+    const index = allReviewPhotos.indexOf(photoUrl);
+    setActivePhotoIndex(index !== -1 ? index : 0);
+    setLightboxOpen(true);
+  };
 
 
   useEffect(() => {
-    const stored = localStorage.getItem(`reviews_${restaurant.id}`);
-    if (stored) {
+    let isSubscribed = true;
+    const fetchReviews = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        // Defer state update to next tick to avoid synchronous "cascading render" warnings
-        // and ensure the initial client-side render matches the server-side render.
-        const timer = setTimeout(() => {
-          setLocalReviews(prev => {
-            // Prevent redundant re-renders if standard reviews match stored ones
-            if (JSON.stringify(prev) === stored) return prev;
-            return parsed;
+        const res = await apiClient.get(`/Review/restaurante/${restaurant.id}`);
+        if (res.data && Array.isArray(res.data) && isSubscribed) {
+          const mapped = res.data.map((r: any, index: number) => {
+            // C# APIs often serialize to PascalCase or camelCase depending on the JSON formatter
+            const id = r.id || r.Id || `api-review-${index}-${Date.now()}`;
+            const rating = r.nota || r.Nota || 0;
+            const comment = r.comentario || r.Comentario || "";
+            const rawDate = r.data || r.Data || new Date().toISOString();
+            
+            // Check for valid date
+            let formattedDate = "";
+            try {
+              const d = new Date(rawDate);
+              formattedDate = isNaN(d.getTime()) ? new Date().toLocaleDateString('pt-BR') : d.toLocaleDateString('pt-BR');
+            } catch {
+              formattedDate = new Date().toLocaleDateString('pt-BR');
+            }
+
+            return {
+              id,
+              userName: "Membro da Comunidade", // API não retorna o nome no GET do Review
+              rating,
+              comment,
+              date: formattedDate,
+              userImage: null,
+              photos: r.fotos || r.Fotos || [],
+              restaurantId: r.idRestaurante || r.IdRestaurante,
+            };
           });
-        }, 0);
-        return () => clearTimeout(timer);
-      } catch {}
-    }
+          // Prepend new mock reviews to existing restaurant.reviews just for display
+          const combined = [...mapped, ...(restaurant.reviews || [])];
+          setLocalReviews(combined);
+        }
+      } catch (e) {
+        console.error("Failed to fetch reviews", e);
+        // Fallback para mock/local storage se falhar
+        const stored = localStorage.getItem(`reviews_${restaurant.id}`);
+        if (stored && isSubscribed) {
+          try {
+            setLocalReviews(JSON.parse(stored));
+          } catch {}
+        }
+      }
+    };
+    fetchReviews();
+    return () => { isSubscribed = false; };
   }, [restaurant.id]);
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newReview.comment.trim()) return;
     
-    const review = {
-      id: `local-${Date.now()}`,
-      userName: newReview.userName || session?.user?.name || "Visitante",
-      rating: newReview.rating,
-      comment: newReview.comment,
-      date: new Date().toLocaleDateString('pt-BR'),
-      userEmail: session?.user?.email || "guest",
-      userImage: session?.user?.image,
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.name
-    };
-    
-    const updated = [review, ...localReviews];
-    setLocalReviews(updated);
-    localStorage.setItem(`reviews_${restaurant.id}`, JSON.stringify(updated));
-    setNewReview({ rating: 5, comment: "", userName: session?.user?.name || "Visitante" });
-    setShowReviewForm(false);
+    try {
+      if (session?.user && (session.user as any).id) {
+        const userId = (session.user as any).id;
+        const token = (session.user as any).accessToken;
+        // Salva na API Render
+        try {
+          const formData = new FormData();
+          formData.append('IdRestaurante', restaurant.id);
+          formData.append('NomeRestaurante', restaurant.name);
+          formData.append('Nota', newReview.rating.toString());
+          formData.append('Comentario', newReview.comment);
+          formData.append('Data', new Date().toISOString());
+          
+          if (newReview.file) {
+            formData.append('Fotos', newReview.file);
+          }
+          
+          const headers: HeadersInit = {};
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log("Token JWT anexado com sucesso. Tamanho:", token.length);
+          } else {
+            console.error("ALERTA: O token JWT está vazio ou indefinido!");
+          }
+
+          console.log("Enviando formulário:", Array.from(formData.entries()));
+
+          const response = await fetch('/api/render/Review', {
+            method: 'POST',
+            headers,
+            body: formData
+          });
+
+          if (!response.ok) {
+            if (response.status === 400) {
+              console.warn("API retornou 400. Salvando apenas no LocalStorage como fallback.");
+            } else {
+              const errText = await response.text();
+              throw new Error(`API Error ${response.status}: ${errText}`);
+            }
+          }
+        } catch (apiError: any) {
+          console.error("Erro na API ao enviar avaliação:", apiError);
+        }
+      }
+      
+      // Atualização otimista na tela
+      let photoUrl = null;
+      if (newReview.file) {
+        photoUrl = URL.createObjectURL(newReview.file);
+      }
+
+      const review = {
+        id: `local-${Date.now()}`,
+        userName: session?.user?.name || newReview.userName || "Visitante",
+        rating: newReview.rating,
+        comment: newReview.comment,
+        date: new Date().toLocaleDateString('pt-BR'),
+        userEmail: session?.user?.email || "guest",
+        userImage: session?.user?.image,
+        photos: photoUrl ? [photoUrl] : [],
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name
+      };
+      
+      const updated = [review, ...localReviews];
+      setLocalReviews(updated);
+      localStorage.setItem(`reviews_${restaurant.id}`, JSON.stringify(updated));
+      
+      setNewReview({ rating: 5, comment: "", userName: "", file: null });
+      setShowReviewForm(false);
+      toast("Avaliação publicada com sucesso!", "success");
+    } catch (error) {
+      console.error("Falha ao salvar review", error);
+      toast("Houve um erro ao salvar sua avaliação. Tente novamente.", "error");
+    }
   };
 
   const displayRating = localReviews.length > 0 
@@ -149,7 +255,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                   }).catch(console.error);
                 } else {
                   navigator.clipboard.writeText(window.location.href);
-                  alert("Link copiado para a área de transferência!");
+                  toast("Link copiado para a área de transferência!", "success");
                 }
               }}
               className="p-3 rounded-xl backdrop-blur-md border border-white/10 bg-black/40 text-white hover:bg-black/60 transition-all shadow-lg flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-300"
@@ -189,17 +295,17 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
         <div className="lg:col-span-2 space-y-8">
           
           {/* About Section */}
-          <motion.section variants={fadeInUp} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-900">Sobre o Restaurante</h2>
-            <p className="text-gray-600 leading-relaxed text-lg">
+          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Sobre o Restaurante</h2>
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
               {restaurant.description}
             </p>
           </motion.section>
 
           {/* Photo Gallery */}
           {restaurant.photos.length > 1 && (
-            <motion.section variants={fadeInUp} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-900">Fotos</h2>
+            <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
+              <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">Fotos</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {restaurant.photos.map((photo, index) => (
                   <button 
@@ -217,9 +323,9 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
           )}
 
           {/* Reviews Section */}
-          <motion.section variants={fadeInUp} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Avaliações</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Avaliações</h2>
               <button 
                 onClick={() => {
                   if (status === "unauthenticated") {
@@ -248,25 +354,25 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                     className="overflow-hidden mb-12"
                   >
                     {status === "unauthenticated" ? (
-                      <div className="bg-gray-50 border border-gray-100 rounded-3xl p-10 text-center shadow-inner mt-4">
-                        <div className="w-16 h-16 bg-red-50 border border-red-100 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                      <div className="bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 rounded-3xl p-10 text-center shadow-inner mt-4">
+                        <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
                           <User size={32} />
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">Faça login para avaliar</h3>
-                        <p className="text-gray-500 mb-8 font-light max-w-sm mx-auto">
+                        <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">Faça login para avaliar</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-8 font-light max-w-sm mx-auto">
                           Autentique-se com sua conta para compartilhar sua experiência com outras pessoas e manter um histórico no seu Perfil.
                         </p>
                         <button 
                           onClick={() => signIn("google")}
-                          className="bg-red-500 text-white font-bold py-4 px-10 rounded-2xl shadow-lg shadow-red-200 hover:bg-red-600 hover:-translate-y-1 transition-all"
+                          className="bg-red-500 text-white font-bold py-4 px-10 rounded-2xl shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-600 hover:-translate-y-1 transition-all"
                         >
                           Entrar com Google
                         </button>
                       </div>
                     ) : (
-                      <form onSubmit={handleSubmitReview} className="bg-white border border-gray-100 p-8 rounded-3xl shadow-lg shadow-gray-200/50 mt-4 relative">
-                        <div className="absolute -top-3 left-10 w-6 h-6 bg-white border-t border-l border-gray-100 rotate-45"></div>
-                        <h3 className="font-semibold text-gray-800 mb-4">Sua avaliação</h3>
+                      <form onSubmit={handleSubmitReview} className="bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 p-8 rounded-3xl shadow-lg shadow-gray-200/50 dark:shadow-none mt-4 relative">
+                        <div className="absolute -top-3 left-10 w-6 h-6 bg-white dark:bg-zinc-800 border-t border-l border-gray-100 dark:border-zinc-700 rotate-45"></div>
+                        <h3 className="font-semibold text-gray-800 dark:text-white mb-4">Sua avaliação</h3>
                         <div className="flex gap-2 mb-4">
                           {[1, 2, 3, 4, 5].map(star => (
                             <button 
@@ -284,17 +390,38 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                           placeholder={mounted ? (session?.user?.name || "Seu nome") : "Seu nome"} 
                           value={newReview.userName}
                           onChange={(e) => setNewReview({...newReview, userName: e.target.value})}
-                          className="w-full mb-3 p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white" 
+                          className="w-full mb-3 p-3 rounded-xl border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-zinc-700 dark:text-white" 
                         />
                         <textarea 
                           placeholder="Conte-nos sobre sua experiência..." 
                           value={newReview.comment}
                           onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
                           rows={3}
-                          className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white resize-none" 
+                          className="w-full mb-3 p-3 rounded-xl border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-zinc-700 dark:text-white resize-none" 
                         />
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Anexar Foto (Opcional)
+                          </label>
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null;
+                              setNewReview({...newReview, file});
+                            }}
+                            className="w-full text-sm text-gray-500 dark:text-gray-400
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-full file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-red-50 file:text-red-700
+                              dark:file:bg-red-500/10 dark:file:text-red-400
+                              hover:file:bg-red-100 dark:hover:file:bg-red-500/20
+                              cursor-pointer"
+                          />
+                        </div>
                         <div className="mt-4 flex justify-end gap-3">
-                          <button type="button" onClick={() => setShowReviewForm(false)} className="px-5 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors">Cancelar</button>
+                          <button type="button" onClick={() => setShowReviewForm(false)} className="px-5 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium transition-colors">Cancelar</button>
                           <button 
                             type="submit" 
                             disabled={!newReview.comment.trim()} 
@@ -312,40 +439,54 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
             {localReviews && localReviews.length > 0 ? (
               <div className="space-y-6" role="list" aria-label="Lista de avaliações">
                 {localReviews.map((review) => (
-                  <div key={review.id} role="listitem" className="p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
+                  <div key={review.id} role="listitem" className="p-6 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 hover:border-gray-200 dark:hover:border-zinc-600 transition-colors">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         {review.userImage ? (
-                          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200">
+                          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200 dark:border-zinc-700">
                             <Image src={review.userImage} alt={review.userName} width={40} height={40} className="object-cover" />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 bg-linear-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-gray-500 shrink-0">
+                          <div className="w-10 h-10 bg-linear-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-800 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0">
                             <User size={20} />
                           </div>
                         )}
                         <div>
-                          <h4 className="font-semibold text-gray-900">{review.userName}</h4>
-                          <p className="text-sm text-gray-500">{review.date}</p>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">{review.userName}</h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{review.date}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm text-sm font-semibold text-gray-800" aria-label={`Avaliação: ${review.rating} estrelas`}>
+                      <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full shadow-sm text-sm font-semibold text-gray-800 dark:text-gray-200" aria-label={`Avaliação: ${review.rating} estrelas`}>
                         <Star size={14} className="text-yellow-500 fill-current" aria-hidden="true" />
-                        {review.rating.toFixed(1)}
+                        {(Number(review.rating) || 0).toFixed(1)}
                       </div>
                     </div>
-                    <p className="text-gray-700">{review.comment}</p>
+                    <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+                    {review.photos && review.photos.length > 0 && (
+                      <div className="mt-4 flex gap-3 overflow-x-auto pb-2 snap-x">
+                        {review.photos.map((photo: string, i: number) => (
+                           <div 
+                             key={i} 
+                             onClick={() => openLightbox(photo)}
+                             className="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm snap-start group cursor-pointer"
+                           >
+                             <img src={photo} alt={`Foto enviada por ${review.userName}`} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300" />
+                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                           </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             ) : (
               /* ESTADO VAZIO / TEMPLATE (SKELETON) */
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 mb-4" aria-hidden="true">
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-700/50 border-dashed">
+                <div className="w-16 h-16 bg-gray-200 dark:bg-zinc-700 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 mb-4" aria-hidden="true">
                   <MessageSquare size={32} />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Seja o primeiro a avaliar!</h3>
-                <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Seja o primeiro a avaliar!</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
                   Estamos integrando nosso novo banco de dados. Em breve as avaliações estarão disponíveis.
                 </p>
                 <div className="w-full max-w-md space-y-4 opacity-40 select-none pointer-events-none" aria-hidden="true">
@@ -377,8 +518,8 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
         <div className="lg:col-span-1 space-y-8">
           
           {/* Info Card */}
-          <motion.section variants={fadeInUp} className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 sticky top-24">
-            <h3 className="text-xl font-semibold mb-6 text-gray-900">Informações</h3>
+          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-zinc-800 sticky top-24">
+            <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Informações</h3>
             
             <ul className="space-y-6">
               <li className="flex gap-4 items-start">
@@ -425,8 +566,8 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                   <Phone size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Contato</p>
-                  <p className="text-gray-900 font-medium">{restaurant.phone}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Contato</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{restaurant.phone}</p>
                 </div>
               </li>
 
@@ -435,16 +576,15 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Endereço</p>
-                  <p className="text-gray-900 font-medium leading-relaxed">{restaurant.address}</p>
-                  <p className="text-sm text-gray-500 mt-1">{restaurant.distance}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Endereço</p>
+                  <p className="text-gray-900 dark:text-white font-medium leading-relaxed">{restaurant.address}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{restaurant.distance}</p>
                 </div>
               </li>
             </ul>
 
-            {/* Interactive Map */}
-            <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col gap-3">
-              <div className="w-full h-64 bg-gray-100 rounded-2xl overflow-hidden relative border border-gray-200/50">
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800 flex flex-col gap-3">
+              <div className="w-full h-64 bg-gray-100 dark:bg-zinc-800 rounded-2xl overflow-hidden relative border border-gray-200/50 dark:border-zinc-700">
                 <iframe
                   title="Mapa do Restaurante"
                   width="100%"
@@ -460,7 +600,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.name + ', ' + restaurant.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 mt-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl flex items-center justify-center gap-2 border border-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                className="w-full py-3 mt-1 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 font-semibold rounded-xl flex items-center justify-center gap-2 border border-gray-200 dark:border-zinc-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
               >
                 <MapPin size={18} /> Abrir no Google Maps
               </a>
@@ -469,6 +609,72 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
 
         </div>
       </div>
+
+      {/* LIGHTBOX MODAL */}
+      <AnimatePresence>
+        {lightboxOpen && allReviewPhotos.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+          >
+            {/* Close Button */}
+            <button 
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-6 right-6 p-2 text-white/70 hover:text-white bg-black/50 hover:bg-white/10 rounded-full transition-colors z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <X size={28} />
+            </button>
+
+            {/* Content */}
+            <div className="relative w-full h-full max-w-6xl mx-auto flex items-center justify-center p-4 md:p-12">
+              
+              {/* Prev Button */}
+              {allReviewPhotos.length > 1 && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActivePhotoIndex(prev => prev === 0 ? allReviewPhotos.length - 1 : prev - 1);
+                  }}
+                  className="absolute left-4 md:left-12 p-3 text-white/70 hover:text-white bg-black/50 hover:bg-white/10 rounded-full transition-colors z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ChevronLeft size={32} />
+                </button>
+              )}
+
+              {/* Main Image */}
+              <motion.img 
+                key={activePhotoIndex}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                src={allReviewPhotos[activePhotoIndex]} 
+                alt={`Foto da galeria ${activePhotoIndex + 1}`} 
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              />
+
+              {/* Next Button */}
+              {allReviewPhotos.length > 1 && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActivePhotoIndex(prev => prev === allReviewPhotos.length - 1 ? 0 : prev + 1);
+                  }}
+                  className="absolute right-4 md:right-12 p-3 text-white/70 hover:text-white bg-black/50 hover:bg-white/10 rounded-full transition-colors z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ChevronRight size={32} />
+                </button>
+              )}
+
+              {/* Counter Indicator */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white/90 text-sm font-medium tracking-wider">
+                {activePhotoIndex + 1} / {allReviewPhotos.length}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.main>
   );
 }

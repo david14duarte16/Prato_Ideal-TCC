@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { apiClient } from "@/lib/services/apiClient";
 
 interface AuthFormProps {
   defaultIsLogin?: boolean;
@@ -12,7 +14,21 @@ interface AuthFormProps {
 export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
   const [isLogin, setIsLogin] = useState(defaultIsLogin);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const toggleMode = () => setIsLogin((prev) => !prev);
+  const [email, setEmail] = useState("demo@pratoideal.com");
+  const [password, setPassword] = useState("senha123");
+  const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  
+  const router = useRouter();
+
+  const toggleMode = () => {
+    setIsLogin((prev) => !prev);
+    setError("");
+    setSuccessMsg("");
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -26,6 +42,52 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!termsAccepted) return;
+    setIsLoading(true);
+    setError("");
+    setSuccessMsg("");
+
+    try {
+      if (isLogin) {
+        const res = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (res?.error) {
+          setError("E-mail ou senha incorretos.");
+        } else {
+          router.push("/");
+          router.refresh();
+        }
+      } else {
+        // O apiClient agora cuida do proxy automaticamente pelo baseURL
+        await apiClient.post('/Usuario/cadastro', {
+          nome: name,
+          email: email,
+          senha: password
+        });
+        
+        // Cadastro com sucesso: Redireciona para login e mostra mensagem
+        setIsLogin(true);
+        setError("");
+        setSuccessMsg("Conta criada com sucesso! Por favor, faça o login.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.response?.data?.message || err.response?.data?.error) {
+         setError(err.response.data.message || err.response.data.error);
+      } else {
+         setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,14 +112,29 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
             </p>
           </motion.div>
 
-          <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+          {error && (
+            <motion.div variants={itemVariants} className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
+              {error}
+            </motion.div>
+          )}
+
+          {successMsg && (
+            <motion.div variants={itemVariants} className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-500 text-sm text-center">
+              {successMsg}
+            </motion.div>
+          )}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {!isLogin && (
               <motion.div variants={itemVariants} className="relative group">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-orange-500 transition-colors" />
                 <input 
                   type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Nome completo" 
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-none"
+                  required={!isLogin}
                 />
               </motion.div>
             )}
@@ -66,18 +143,31 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-orange-500 transition-colors" />
               <input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="E-mail" 
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-none"
+                required
               />
             </motion.div>
 
             <motion.div variants={itemVariants} className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-orange-500 transition-colors" />
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Senha" 
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-none"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-12 text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-none"
+                required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </motion.div>
 
             {isLogin && (
@@ -102,18 +192,25 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
             </motion.div>
 
             <motion.button 
+              type="submit"
               variants={itemVariants}
-              whileHover={termsAccepted ? { scale: 1.01 } : {}}
-              whileTap={termsAccepted ? { scale: 0.99 } : {}}
-              disabled={!termsAccepted}
+              whileHover={termsAccepted && !isLoading ? { scale: 1.01 } : {}}
+              whileTap={termsAccepted && !isLoading ? { scale: 0.99 } : {}}
+              disabled={!termsAccepted || isLoading}
               className={`w-full rounded-2xl py-4 font-semibold flex items-center justify-center gap-2 group transition-all outline-none ${
-                termsAccepted 
+                termsAccepted && !isLoading
                   ? "bg-linear-to-r from-orange-500 to-rose-500 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40" 
                   : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
               }`}
             >
-              {isLogin ? "Entrar" : "Criar conta"}
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  {isLogin ? "Entrar" : "Criar conta"}
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </motion.button>
           </form>
 

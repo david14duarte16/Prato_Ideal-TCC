@@ -3,12 +3,11 @@
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Camera, MapPin, Calendar, Edit3, Shield, Star, Heart, Clock, ChevronRight, Lock } from "lucide-react";
+import { Mail, Camera, MapPin, Calendar, Edit3, Shield, Star, Heart, Clock, ChevronRight, Lock, Key, Check, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
-import { FavoriteItem } from "@/lib/hooks/useFavorites";
+import { useFavorites } from "@/lib/hooks/useFavorites";
 import { ReviewItem } from "@/lib/services/restaurantService";
-import { mockFavoritesAPIResponse, mockReviewsAPIResponse, mockUsers } from "@/services/mockData";
 import { Badge } from "@/components/ui/Badge";
 import { getUserLevelData, GAMIFICATION_LEVELS } from "@/lib/utils/gamification";
 import Link from "next/link";
@@ -34,10 +33,10 @@ const BACKGROUND_OPTIONS = [
 
 export default function PerfilPage() {
   const { data: session, status } = useSession();
+  const { favorites: realFavorites, isLoaded: isFavLoaded } = useFavorites();
   const [activeTab, setActiveTab] = useState("activity");
   const [showAllActivity, setShowAllActivity] = useState(false);
 
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   
@@ -46,6 +45,13 @@ export default function PerfilPage() {
 
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState("Explorador da gastronomia digital testando o novo sistema Prato Ideal. 🚀");
+
+  const [dob, setDob] = useState("");
+  const [isEditingDob, setIsEditingDob] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: "", new: "", confirm: "" });
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(true);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -61,58 +67,65 @@ export default function PerfilPage() {
       const savedBio = localStorage.getItem('saborcia_profile_bio');
       if (savedBio) setBio(savedBio);
 
-      // Load favorites via Fake DB (Local Storage simulation for tests)
-      const localDb = localStorage.getItem('saborcia_mock_db_favorites');
-      if (localDb) {
-        setFavorites(JSON.parse(localDb));
-      } else {
-        const apiFavs = mockFavoritesAPIResponse;
-        const mappedFavorites = apiFavs.map(f => ({
-          id: f.place_id,
-          place_id: f.place_id,
-          name: "Restaurante (Load via API)",
-          image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800"
-        }));
-        setFavorites(mappedFavorites);
-        localStorage.setItem('saborcia_mock_db_favorites', JSON.stringify(mappedFavorites));
-      }
+      const savedDob = localStorage.getItem('saborcia_profile_dob');
+      if (savedDob) setDob(savedDob);
 
-      // Load reviews via MOCK API
-      const apiReviews = mockReviewsAPIResponse;
-      const mappedReviews: ReviewItem[] = apiReviews.map(r => ({
-        id: r._id || "rev",
-        userName: mockUsers[0].name,
-        userEmail: mockUsers[0].email,
-        rating: r.rating,
-        comment: r.comment,
-        date: new Date(r.createdAt).toLocaleDateString('pt-BR'),
-        restaurantId: r.place_id,
-        restaurantName: "Restaurante Avaliado (Load via API)"
-      }));
-      
-      // Load user manual local storage reviews to allow them to test
-      const allReviews: ReviewItem[] = [...mappedReviews];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("reviews_")) {
-          try {
-            const storedResReviews = JSON.parse(localStorage.getItem(key) || "[]") as ReviewItem[];
-            allReviews.push(...storedResReviews);
-          } catch {}
+      // Load user reviews from Render API
+      let userReviews: ReviewItem[] = [];
+      const fetchApiReviews = async () => {
+        try {
+          if (session?.user && (session.user as any).accessToken) {
+            const { apiClient } = await import('@/lib/services/apiClient');
+            const token = (session.user as any).accessToken;
+            const res = await apiClient.get('/Review/usuario', {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (res.data && Array.isArray(res.data)) {
+              userReviews = res.data.map((r: any) => ({
+                id: r.Id.toString(),
+                restaurantId: r.IdRestaurante,
+                restaurantName: "Restaurante Avaliado", // We don't have the name from the API, we'd need to fetch it or leave it generic
+                userId: r.IdUsuario,
+                userEmail: userEmail,
+                userName: session?.user?.name || "Usuário",
+                rating: r.Nota,
+                comment: r.Comentario,
+                date: new Date().toLocaleDateString('pt-BR') // API doesn't return Date, using fallback
+              }));
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao buscar avaliações da API", error);
         }
-      }
 
-      const userReviews = allReviews.filter(r => r.userEmail === userEmail || session); // se for guest, mostra tudo para teste
-      
-      // Sort reviews by id timestamp (descending)
-      userReviews.sort((a, b) => {
-        const timeA = a.id.includes('-') ? parseInt(a.id.split('-')[1] || "0") : 0;
-        const timeB = b.id.includes('-') ? parseInt(b.id.split('-')[1] || "0") : 0;
-        return timeB - timeA;
-      });
+        // Fallback to local storage for guests or if API failed
+        if (userReviews.length === 0) {
+          const allReviews: (ReviewItem & { isCached?: boolean })[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("reviews_")) {
+              try {
+                const storedResReviews = JSON.parse(localStorage.getItem(key) || "[]") as ReviewItem[];
+                allReviews.push(...storedResReviews.map(r => ({ ...r, isCached: true })));
+              } catch {}
+            }
+          }
+          userReviews = allReviews.filter(r => r.userEmail === userEmail || !session);
+        }
 
-      setReviews(userReviews);
-      setIsLoaded(true);
+        // Sort reviews by id timestamp (descending) if local, or leave as is from API
+        userReviews.sort((a, b) => {
+          const timeA = a.id.includes('-') ? parseInt(a.id.split('-')[1] || "0") : 0;
+          const timeB = b.id.includes('-') ? parseInt(b.id.split('-')[1] || "0") : 0;
+          return timeB - timeA;
+        });
+
+        setReviews(userReviews);
+        setIsLoaded(true);
+      };
+
+      fetchApiReviews();
     }, 0);
 
     return () => clearTimeout(timer);
@@ -123,15 +136,32 @@ export default function PerfilPage() {
     setIsEditingBio(false);
   };
 
+  const handleSaveDob = () => {
+    localStorage.setItem('saborcia_profile_dob', dob);
+    setIsEditingDob(false);
+  };
+  
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.new === passwordForm.confirm && passwordForm.new.length >= 6) {
+      setPasswordSuccess(true);
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess(false);
+        setPasswordForm({ current: "", new: "", confirm: "" });
+      }, 2000);
+    }
+  };
+
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.5 }
   };
 
-  if (status === "loading" || !isLoaded) {
+  if (status === "loading" || !isLoaded || !isFavLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-950">
         <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -202,11 +232,11 @@ export default function PerfilPage() {
   // Interleave and sort by most recent logic
   interface ActivityItem { type: string; place: string; date: string; rating: number | null; link: string; }
   const recentActivity: ActivityItem[] = [];
-  const maxLen = Math.max(reviews.length, favorites.length);
+  const maxLen = Math.max(reviews.length, realFavorites.length);
   for (let i = 0; i < maxLen; i++) {
     // Para favoritos (novos salvos no final do array local)
-    if (i < favorites.length) {
-      const f = favorites[favorites.length - 1 - i];
+    if (i < realFavorites.length) {
+      const f = realFavorites[realFavorites.length - 1 - i];
       recentActivity.push({ type: "favorite", place: f.name, date: "Favorito", rating: null, link: `/restaurante/${f.id}` });
     }
     // Para avaliações (estão sorteadas por timestamp em ordem descrescente)
@@ -219,7 +249,7 @@ export default function PerfilPage() {
   const displayedActivity = showAllActivity ? recentActivity : recentActivity.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
       <Navbar />
       
       <div className="pt-32 pb-20 container mx-auto px-4 max-w-5xl">
@@ -227,13 +257,13 @@ export default function PerfilPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden mb-8"
+          className="bg-white dark:bg-zinc-900 rounded-[3rem] shadow-xl border border-gray-100 dark:border-zinc-800 overflow-hidden mb-8"
         >
           <div 
             className="h-48 relative bg-cover bg-center"
             style={{ backgroundImage: `url(${selectedBg})` }}
           >
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-black/20 dark:bg-black/60" />
             <div className="absolute top-0 right-0 p-6 z-10">
               <button 
                 onClick={() => setShowBgModal(true)}
@@ -264,46 +294,42 @@ export default function PerfilPage() {
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-end justify-between w-full gap-6">
-              <div>
-                <motion.h1 
-                  {...fadeIn}
-                  className={`text-[2.25rem] font-black text-gray-900 mb-2 tracking-tight flex items-center gap-3 relative ${
-                    levelData.currentLevelColor === 'purple' ? 'drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 
-                    levelData.currentLevelColor === 'amber' ? 'drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]' : ''
-                  }`}
-                >
-                  {name}
-                  {/* Elite Glow Effect for high levels */}
-                  {(levelData.currentLevelColor === 'purple' || levelData.currentLevelColor === 'amber') && (
-                    <motion.div
-                      animate={{ opacity: [0.3, 0.6, 0.3] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className={`absolute -inset-x-4 -inset-y-2 rounded-2xl blur-xl -z-10 ${
-                        levelData.currentLevelColor === 'purple' ? 'bg-purple-200' : 'bg-amber-200'
-                      }`}
-                    />
-                  )}
-                  <Badge title={levelData.currentTitle} color={levelData.currentLevelColor} />
-                </motion.h1>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-gray-500 font-medium">
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full">
-                    <Mail size={16} />
-                    <span className="text-sm">{email}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full">
-                    <MapPin size={16} />
-                    <span className="text-sm">São Paulo, SP</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full">
-                    <Calendar size={16} />
-                    <span className="text-sm">Membro Recente</span>
-                  </div>
+            <div className="flex flex-col w-full relative mt-2">
+              <motion.h1 
+                {...fadeIn}
+                className={`text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-5 tracking-tight flex flex-wrap items-center justify-center md:justify-start gap-4 relative ${
+                  levelData.currentLevelColor === 'purple' ? 'drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]' : 
+                  levelData.currentLevelColor === 'amber' ? 'drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]' : ''
+                }`}
+              >
+                {name}
+                {/* Elite Glow Effect for high levels */}
+                {(levelData.currentLevelColor === 'purple' || levelData.currentLevelColor === 'amber') && (
+                  <motion.div
+                    animate={{ opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className={`absolute -inset-x-4 -inset-y-2 rounded-2xl blur-xl -z-10 ${
+                      levelData.currentLevelColor === 'purple' ? 'bg-purple-200' : 'bg-amber-200'
+                    }`}
+                  />
+                )}
+                <Badge title={levelData.currentTitle} color={levelData.currentLevelColor} />
+              </motion.h1>
+              
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-gray-600 dark:text-gray-300 font-medium">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <Mail size={16} className="text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm">{email}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <MapPin size={16} className="text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm">São Paulo, SP</span>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <Calendar size={16} className="text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm">Membro Recente</span>
                 </div>
               </div>
-              <button className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-10 rounded-2xl shadow-lg shadow-red-200 transition-all hover:-translate-y-1 shrink-0">
-                Editar Perfil
-              </button>
             </div>
           </div>
         </motion.div>
@@ -314,10 +340,10 @@ export default function PerfilPage() {
             <motion.div 
               {...fadeIn}
               transition={{ delay: 0.1 }}
-              className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm group/bio"
+              className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 shadow-sm group/bio"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Sobre mim</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Sobre mim</h3>
                 {!isEditingBio && (
                   <button onClick={() => setIsEditingBio(true)} className="text-gray-400 hover:text-red-500 opacity-0 group-hover/bio:opacity-100 transition-all">
                     <Edit3 size={16} />
@@ -344,19 +370,19 @@ export default function PerfilPage() {
               )}
               
               <div className="grid grid-cols-2 gap-4 mt-8">
-                <button onClick={() => setActiveTab("reviews")} className="text-center p-4 bg-gray-50 rounded-3xl group hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                <button onClick={() => setActiveTab("reviews")} className="text-center p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-3xl group hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                   <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Star className="text-yellow-500" />
                   </div>
-                  <div className="text-lg font-black text-gray-900">{reviews.length}</div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Avaliações</div>
+                  <div className="text-lg font-black text-gray-900 dark:text-white">{reviews.length}</div>
+                  <div className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Avaliações</div>
                 </button>
-                <Link href="/favoritos" className="block text-center p-4 bg-gray-50 rounded-3xl group hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                <Link href="/favoritos" className="block text-center p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-3xl group hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                   <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Heart className="text-red-500" />
                   </div>
-                  <div className="text-lg font-black text-gray-900">{favorites.length}</div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Favoritos</div>
+                  <div className="text-lg font-black text-gray-900 dark:text-white">{realFavorites.length}</div>
+                  <div className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">Favoritos</div>
                 </Link>
               </div>
 
@@ -444,9 +470,8 @@ export default function PerfilPage() {
             </motion.div>
           </div>
 
-          {/* Right Column - Tabs & Content */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white p-2 rounded-3xl inline-flex gap-2 border border-gray-100 shadow-sm mb-4">
+            <div className="bg-white dark:bg-zinc-900 p-2 rounded-3xl inline-flex flex-wrap gap-2 border border-gray-100 dark:border-zinc-800 shadow-sm mb-4">
               {["activity", "info", "reviews"].map((tab) => (
                 <button
                   key={tab}
@@ -454,7 +479,7 @@ export default function PerfilPage() {
                   className={`px-8 py-3 rounded-2xl font-bold text-sm transition-all focus-visible:outline-none focus:ring-2 focus:ring-red-400 ${
                     activeTab === tab 
                       ? "bg-red-500 text-white shadow-md shadow-red-200" 
-                      : "text-gray-500 hover:bg-gray-50"
+                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
                   }`}
                 >
                   {tab === "info" ? "Informações" : tab === "reviews" ? "Avaliações" : "Sua Atividade"}
@@ -471,27 +496,91 @@ export default function PerfilPage() {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-6"
                 >
-                  <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-5">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 shadow-sm bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-5">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                       <div className="w-1.5 h-6 bg-red-500 rounded-full"></div>
                       Meus Dados
                     </h3>
                     <div className="grid md:grid-cols-2 gap-8">
                       <div className="space-y-1">
-                        <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-1">Nome Completo</label>
-                        <p className="text-gray-900 font-bold bg-gray-50 p-4 rounded-2xl truncate">{name}</p>
+                        <label className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest pl-1">Nome Completo</label>
+                        <p className="text-gray-900 dark:text-white font-bold bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl truncate">{name}</p>
                       </div>
+                      
                       <div className="space-y-1">
-                        <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-1">E-mail Vinculado</label>
-                        <p className="text-gray-900 font-bold bg-gray-50 p-4 rounded-2xl truncate">{email}</p>
+                        <label className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest pl-1 flex items-center justify-between">
+                          <span>E-mail Vinculado</span>
+                          {isEmailVerified ? (
+                            <span className="text-green-500 flex items-center gap-1 text-[9px]"><Check size={10} strokeWidth={3} /> Verificado</span>
+                          ) : (
+                            <span className="text-amber-500 flex items-center gap-1 text-[9px]"><AlertCircle size={10} strokeWidth={3} /> Pendente</span>
+                          )}
+                        </label>
+                        <p className="text-gray-900 dark:text-white font-bold bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl truncate border border-transparent flex justify-between items-center">
+                          {email}
+                          {!isEmailVerified && (
+                            <button className="text-xs text-red-500 hover:underline">Validar</button>
+                          )}
+                        </p>
                       </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest pl-1 flex items-center justify-between">
+                          <span>Data de Nascimento</span>
+                          {!isEditingDob && (
+                            <button onClick={() => setIsEditingDob(true)} className="text-red-500 hover:text-red-600 transition-colors">
+                              <Edit3 size={12} />
+                            </button>
+                          )}
+                        </label>
+                        {isEditingDob ? (
+                          <div className="flex gap-2">
+                            <input 
+                              type="date" 
+                              value={dob}
+                              onChange={(e) => setDob(e.target.value)}
+                              className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm text-gray-900 dark:text-white outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100 transition-all font-bold h-[54px]"
+                            />
+                            <button onClick={handleSaveDob} className="bg-red-500 text-white px-4 rounded-xl text-xs font-bold hover:bg-red-600 shadow-sm shrink-0">Salvar</button>
+                          </div>
+                        ) : (
+                          <p className="text-gray-900 dark:text-white font-bold bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-2xl h-[54px] flex items-center">
+                            {dob ? new Date(dob + 'T12:00:00').toLocaleDateString('pt-BR') : <span className="text-gray-400 dark:text-gray-500 font-normal italic">Não informada</span>}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-1">Segurança</label>
+                        {session?.user?.image?.includes('googleusercontent') || session?.user?.email?.endsWith('@gmail.com') ? (
+                           <div className="w-full h-[54px] bg-gray-50 px-4 rounded-2xl flex items-center justify-between border border-transparent">
+                             <span className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                               <Shield size={16} className="text-gray-400" />
+                               Conta vinculada ao Google
+                             </span>
+                           </div>
+                        ) : (
+                          <button 
+                            onClick={() => setShowPasswordModal(true)}
+                            className="w-full h-[54px] text-gray-900 font-bold bg-gray-50 hover:bg-red-50 hover:text-red-600 px-4 rounded-2xl border border-transparent transition-all flex items-center justify-between group"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Key size={16} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                              Trocar de Senha
+                            </span>
+                            <ChevronRight size={16} className="text-gray-300 group-hover:text-red-500 transition-colors" />
+                          </button>
+                        )}
+                      </div>
+
                       <div className="space-y-1">
                         <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-1">Total de Interações</label>
-                        <p className="text-gray-900 font-bold bg-gray-50 p-4 rounded-2xl">{recentActivity.length} iterações anotadas</p>
+                        <p className="text-gray-900 font-bold bg-gray-50 p-4 rounded-2xl h-[54px] flex items-center">{recentActivity.length} iterações anotadas</p>
                       </div>
+                      
                       <div className="space-y-1">
                         <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-1">Status de Armazenamento</label>
-                        <p className="text-red-500 font-black bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-2">
+                        <p className="text-red-500 font-black bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-2 h-[54px]">
                           <CheckCircle size={16} className="text-red-500" /> Sincronizado
                         </p>
                       </div>
@@ -509,10 +598,10 @@ export default function PerfilPage() {
                   className="space-y-4"
                 >
                   {reviews.length === 0 ? (
-                    <div className="text-center py-16 bg-white rounded-[2.5rem] border border-gray-100">
-                      <div className="text-gray-300 flex justify-center mb-4"><Star size={48} /></div>
-                      <h3 className="text-xl font-semibold text-gray-800 mb-2">Sem avaliações</h3>
-                      <p className="text-gray-500">Você ainda não avaliou nenhum restaurante.</p>
+                    <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800">
+                      <div className="text-gray-300 dark:text-gray-700 flex justify-center mb-4"><Star size={48} /></div>
+                      <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Sem avaliações</h3>
+                      <p className="text-gray-500 dark:text-gray-400">Você ainda não avaliou nenhum restaurante.</p>
                     </div>
                   ) : (
                     <div className="grid gap-4">
@@ -523,7 +612,14 @@ export default function PerfilPage() {
                                <Link href={`/restaurante/${r.restaurantId}`} className="font-bold text-lg text-gray-900 hover:text-red-500 transition-colors">
                                  {r.restaurantName}
                                </Link>
-                               <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg">{r.date}</span>
+                               <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg flex items-center gap-2">
+                                 {(r as any).isCached && (
+                                   <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                     <AlertCircle size={10} /> Cache Local
+                                   </span>
+                                 )}
+                                 {r.date}
+                               </span>
                              </div>
                              <div className="flex items-center gap-1 text-amber-500 text-sm">
                                {Array.from({ length: 5 }).map((_, j) => (
@@ -659,6 +755,93 @@ export default function PerfilPage() {
               >
                 Fechar
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Trocar Senha */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
+            >
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+
+              {passwordSuccess ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Check size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Senha Atualizada!</h3>
+                  <p className="text-gray-500 text-sm">Sua nova senha foi salva com sucesso e já está valendo.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                      <Key size={20} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Trocar Senha</h3>
+                  </div>
+                  <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Senha Atual</label>
+                      <input 
+                        type="password" 
+                        required
+                        value={passwordForm.current}
+                        onChange={e => setPasswordForm({...passwordForm, current: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100 transition-all" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Nova Senha</label>
+                      <input 
+                        type="password" 
+                        required
+                        minLength={6}
+                        value={passwordForm.new}
+                        onChange={e => setPasswordForm({...passwordForm, new: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100 transition-all" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Confirmar Nova Senha</label>
+                      <input 
+                        type="password" 
+                        required
+                        minLength={6}
+                        value={passwordForm.confirm}
+                        onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100 transition-all" 
+                      />
+                    </div>
+                    
+                    <button 
+                      type="submit"
+                      disabled={passwordForm.new !== passwordForm.confirm || passwordForm.new.length < 6}
+                      className="w-full bg-red-500 text-white font-bold rounded-xl p-4 hover:bg-red-600 transition-colors shadow-md shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    >
+                      Atualizar Senha
+                    </button>
+                  </form>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

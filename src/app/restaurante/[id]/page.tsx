@@ -34,7 +34,7 @@ export default async function RestaurantPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-24">
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-zinc-950 pb-24">
       <RestaurantDetailClient restaurant={restaurant} />
     </div>
   );

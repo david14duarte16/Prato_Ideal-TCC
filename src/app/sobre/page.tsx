@@ -20,7 +20,7 @@ export default function SobreNos() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden bg-gray-900">
         <div className="absolute inset-0 z-0 opacity-40">
@@ -58,8 +58,8 @@ export default function SobreNos() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">Quem Somos</h2>
-            <div className="space-y-4 text-gray-600 leading-relaxed text-lg">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900 dark:text-white">Quem Somos</h2>
+            <div className="space-y-4 text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
               <p>
                 O <strong>Prato Ideal</strong> nasceu da paixão por boa comida e da dificuldade de encontrar lugares autênticos em cidades desconhecidas. Começamos como um pequeno blog de avaliações e hoje somos a maior plataforma de descoberta gastronômica do país.
               </p>
@@ -93,17 +93,17 @@ export default function SobreNos() {
                 frase: "“Avalio velocidade do garçom e reposição de frita.”"
               }
             ].map((perfil, index) => (
-              <div key={index} className="bg-gray-50 rounded-2xl p-5 flex flex-col items-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-20 h-20 bg-gray-200 rounded-full mb-3 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center shrink-0">
-                  <span className="text-gray-400 text-[10px] font-bold">FOTO</span>
+              <div key={index} className="bg-gray-50 dark:bg-zinc-900/50 rounded-2xl p-5 flex flex-col items-center text-center shadow-sm border border-gray-100 dark:border-zinc-800/50 hover:shadow-md dark:hover:shadow-none transition-shadow">
+                <div className="w-20 h-20 bg-gray-200 dark:bg-zinc-800 rounded-full mb-3 overflow-hidden border-4 border-white dark:border-zinc-900 shadow-sm flex items-center justify-center shrink-0">
+                  <span className="text-gray-400 dark:text-gray-500 text-[10px] font-bold">FOTO</span>
                 </div>
                 <input 
                   type="text" 
                   placeholder="[NOME]" 
-                  className="bg-transparent font-bold text-gray-900 text-center w-full focus:outline-none mb-1 text-sm border-b border-dashed border-gray-300 focus:border-red-500 pb-1"
+                  className="bg-transparent font-bold text-gray-900 dark:text-white text-center w-full focus:outline-none mb-1 text-sm border-b border-dashed border-gray-300 dark:border-zinc-700 focus:border-red-500 pb-1"
                 />
                 <span className="text-[10px] uppercase font-black tracking-widest text-red-500 mb-2">{perfil.cargo}</span>
-                <p className="text-xs text-gray-500 italic mt-auto px-1">{perfil.frase}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-auto px-1">{perfil.frase}</p>
               </div>
             ))}
           </motion.div>
@@ -111,7 +111,7 @@ export default function SobreNos() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-gray-50 py-20">
+      <section className="bg-gray-50 dark:bg-zinc-900/30 py-20">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
@@ -124,7 +124,7 @@ export default function SobreNos() {
                 className="text-center"
               >
                 <div className="text-4xl font-black text-red-500 mb-2">{stat.value}</div>
-                <div className="text-gray-500 font-medium">{stat.label}</div>
+                <div className="text-gray-500 dark:text-gray-400 font-medium">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -134,8 +134,8 @@ export default function SobreNos() {
       {/* Values Section */}
       <section className="py-24">
         <div className="container mx-auto px-4 text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Nossos Valores</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">O que nos guia todos os dias em nossa jornada.</p>
+          <h2 className="text-4xl font-bold mb-4 dark:text-white">Nossos Valores</h2>
+          <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">O que nos guia todos os dias em nossa jornada.</p>
         </div>
         <div className="container mx-auto px-4 grid md:grid-cols-4 gap-8">
           {[
@@ -147,13 +147,13 @@ export default function SobreNos() {
             <motion.div
               key={index}
               whileHover={{ y: -10 }}
-              className="p-8 bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 text-center"
+              className="p-8 bg-white dark:bg-zinc-900/50 border border-gray-100 dark:border-zinc-800/50 rounded-3xl shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-md transition-all duration-300 text-center"
             >
-              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 {value.icon}
               </div>
-              <h3 className="text-xl font-bold mb-2">{value.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{value.desc}</p>
+              <h3 className="text-xl font-bold mb-2 dark:text-white">{value.title}</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{value.desc}</p>
             </motion.div>
           ))}
         </div>

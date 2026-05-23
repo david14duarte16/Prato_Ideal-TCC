@@ -5,6 +5,7 @@ import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useSession } from "next-auth/react";
 import { Heart, Star, MapPin, Clock, Share2, Percent, Tag } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "@/components/ui/Toast";
 
 import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
@@ -29,7 +30,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
       whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
       className="group h-full"
     >
-      <article className="flex flex-col relative h-full overflow-hidden rounded-[1.25rem] bg-white border border-gray-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-shadow duration-300">
+      <article className="flex flex-col relative h-full overflow-hidden rounded-[1.25rem] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-shadow duration-300">
         <div className="relative h-48 w-full overflow-hidden">
           <Image
             src={restaurant.image}
@@ -43,7 +44,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
           <Link href={`/restaurante/${restaurant.id}`} className="absolute inset-0 z-10" aria-hidden="true" tabIndex={-1} />
 
           <div 
-            className="absolute top-5 left-5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-sm font-bold text-[0.875rem] flex items-center gap-1 text-gray-900 border border-white/20"
+            className="absolute top-5 left-5 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-sm font-bold text-[0.875rem] flex items-center gap-1 text-gray-900 dark:text-white border border-white/20 dark:border-zinc-700/50"
             role="img" 
             aria-label={`Avaliação: ${restaurant.rating.toFixed(1)} estrelas`}
           >
@@ -75,10 +76,10 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
                 }).catch((error) => console.log('Erro ao compartilhar', error));
               } else {
                 navigator.clipboard.writeText(`${window.location.origin}/restaurante/${restaurant.id}`);
-                alert("Link copiado para a área de transferência!");
+                toast("Link copiado para a área de transferência!", "success");
               }
             }}
-            className="absolute top-5 right-16 p-2.5 z-20 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 active:scale-90 bg-white/90 text-gray-400 hover:text-blue-500 hover:bg-white"
+            className="absolute top-5 right-16 p-2.5 z-20 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 active:scale-90 bg-white/90 dark:bg-zinc-900/90 text-gray-400 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-zinc-800"
             aria-label={`Compartilhar ${restaurant.name}`}
           >
             <Share2 size={18} aria-hidden="true" />
@@ -98,7 +99,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
             className={`absolute top-5 right-5 p-2.5 z-20 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 active:scale-90 ${
               favorite 
                 ? "bg-red-500 text-white" 
-                : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white"
+                : "bg-white/90 dark:bg-zinc-900/90 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-white dark:hover:bg-zinc-800"
             }`}
             aria-label={favorite ? `Remover ${restaurant.name} dos favoritos` : `Adicionar ${restaurant.name} aos favoritos`}
             aria-pressed={favorite}
@@ -108,7 +109,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
         </div>
         
         <div className="p-5 flex flex-col gap-2 grow relative z-10">
-          <h3 className="font-outfit font-extrabold text-[1.125rem] text-gray-900 line-clamp-1 group-hover:text-red-600 transition-colors leading-tight">
+          <h3 className="font-outfit font-extrabold text-[1.125rem] text-gray-900 dark:text-white line-clamp-1 group-hover:text-red-600 transition-colors leading-tight">
             <Link 
               href={`/restaurante/${restaurant.id}`} 
               className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 rounded-lg"
@@ -125,7 +126,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
                 <span>{restaurant.category}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 text-gray-500 font-medium text-[0.8125rem]" aria-label={`Localização: ${restaurant.city}, distância: ${restaurant.distance}`}>
+            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 font-medium text-[0.8125rem]" aria-label={`Localização: ${restaurant.city}, distância: ${restaurant.distance}`}>
               <MapPin size={14} className="shrink-0 text-red-400" aria-hidden="true" />
               <span className="line-clamp-1">{restaurant.city} • {restaurant.distance}</span>
             </div>
@@ -139,7 +140,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
                     : `Aberto até ${restaurant.openUntil}`}
                 </span>
                 {restaurant.openingHours && restaurant.openingHours.length > 0 && (
-                  <span className="text-[0.6875rem] text-gray-400 font-medium">
+                  <span className="text-[0.6875rem] text-gray-400 dark:text-zinc-500 font-medium">
                     {restaurant.openingHours[0].split(': ')[0]} a Domingo
                   </span>
                 )}
