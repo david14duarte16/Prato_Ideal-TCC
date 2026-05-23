@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/services/apiClient";
@@ -50,6 +50,12 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
     setIsLoading(true);
     setError("");
     setSuccessMsg("");
+
+    if (!isLogin && password.length < 8) {
+      setError("A senha deve conter no mínimo 8 caracteres.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       if (isLogin) {
@@ -113,8 +119,9 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
           </motion.div>
 
           {error && (
-            <motion.div variants={itemVariants} className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
-              {error}
+            <motion.div variants={itemVariants} className="mb-4 p-3 flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center">
+              <AlertCircle size={18} />
+              <span>{error}</span>
             </motion.div>
           )}
 
@@ -157,9 +164,10 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Senha" 
+                placeholder="Senha (mínimo 8 caracteres)" 
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-12 text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all outline-none"
                 required
+                minLength={!isLogin ? 8 : undefined}
               />
               <button
                 type="button"

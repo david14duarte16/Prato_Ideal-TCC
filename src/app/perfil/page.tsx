@@ -437,31 +437,37 @@ export default function PerfilPage() {
                 <Shield className="text-gray-700 w-6 h-6" />
               </h3>
               <div className="grid grid-cols-2 gap-4 relative z-10">
-                {GAMIFICATION_LEVELS.map((level, i) => {
+                {GAMIFICATION_LEVELS.map((level: any, i: number) => {
                   const unlocked = reviews.length >= level.min;
-                  const icons = ["🍳", "🍜", "🍷", "👨‍🍳"];
-                  const humor = ["Ovo Frito", "Miojo Gourmet", "Sommelier de Água", "Chef Jacquin"];
                   
                   const colorMap: Record<string, string> = {
                     gray: 'border-gray-500 shadow-gray-500/20 text-gray-300',
                     blue: 'border-blue-500 shadow-blue-500/30 text-blue-400',
+                    green: 'border-green-500 shadow-green-500/30 text-green-400',
                     purple: 'border-purple-500 shadow-purple-500/40 text-purple-400',
+                    red: 'border-red-500 shadow-red-500/40 text-red-400',
+                    orange: 'border-orange-500 shadow-orange-500/40 text-orange-400',
                     amber: 'border-amber-500 shadow-amber-500/50 text-amber-400'
                   };
+
+                  const tooltipText = unlocked 
+                    ? `Conquista Desbloqueada!` 
+                    : `Faltam ${level.min - reviews.length} avaliações para: ${level.title}`;
 
                   return (
                     <motion.div 
                       key={i} 
+                      title={tooltipText}
                       whileHover={unlocked ? { scale: 1.05 } : {}}
                       className={`p-4 rounded-3xl flex flex-col items-center justify-center text-center transition-all duration-300 border-2 ${
                         unlocked 
                           ? `bg-gray-900 ${colorMap[level.color]} shadow-lg` 
-                          : 'bg-gray-900/50 border-gray-800 opacity-40 grayscale'
+                          : 'bg-gray-900/50 border-gray-800 opacity-40 grayscale hover:grayscale-0 hover:opacity-100 cursor-help'
                       }`}
                     >
-                      <div className="text-4xl mb-2 filter drop-shadow-md">{icons[i]}</div>
-                      <div className="font-bold text-xs leading-tight mb-1">{level.title}</div>
-                      <div className="text-[9px] text-gray-500 uppercase tracking-widest font-black">{humor[i]}</div>
+                      <div className="text-4xl mb-2 filter drop-shadow-md">{level.icon}</div>
+                      <div className="font-bold text-[11px] leading-tight mb-1">{level.title}</div>
+                      <div className="text-[9px] text-gray-500 uppercase tracking-widest font-black">{level.humor}</div>
                     </motion.div>
                   );
                 })}

@@ -1,8 +1,11 @@
 export const GAMIFICATION_LEVELS = [
-  { min: 0, title: "Novato", color: "gray", nextAt: 5 },
-  { min: 5, title: "Explorador Gastronômico", color: "blue", nextAt: 10 },
-  { min: 10, title: "Crítico Local", color: "purple", nextAt: 20 },
-  { min: 20, title: "Mestre do Sabor", color: "amber", nextAt: 50 },
+  { min: 0, title: "Só vim pelo Wi-Fi", color: "gray", icon: "📶", humor: "PENDURADO NO ROTEADOR", nextAt: 6 },
+  { min: 6, title: "Marmiteiro de Elite", color: "blue", icon: "🍱", humor: "ESPECIALISTA EM MISTURA", nextAt: 11 },
+  { min: 11, title: "Caçador de Rodízios", color: "green", icon: "🍕", humor: "PREJUÍZO DA PIZZARIA", nextAt: 21 },
+  { min: 21, title: "Sommelier de PF", color: "purple", icon: "🍛", humor: "AVALIADOR DE FAROFA", nextAt: 36 },
+  { min: 36, title: "Terror do Buffet Livre", color: "red", icon: "🍽️", humor: "BALANÇA QUEBRADA", nextAt: 51 },
+  { min: 51, title: "Crítico de Boteco", color: "orange", icon: "🍻", humor: "RAIZ DEMAIS", nextAt: 101 },
+  { min: 101, title: "Imperador da Gastronomia", color: "amber", icon: "👑", humor: "GORDON RAMSAY BR", nextAt: null },
 ];
 
 export function getUserLevelData(count: number) {
