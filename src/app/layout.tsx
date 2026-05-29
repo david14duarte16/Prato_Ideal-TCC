@@ -29,6 +29,7 @@ import AccessibilityPanel from "@/components/accessibility/AccessibilityPanel";
 import AriaAnnouncer from "@/components/accessibility/AriaAnnouncer";
 import ToastContainer from "@/components/ui/Toast";
 import { AuthModalProvider } from "@/components/providers/AuthModalProvider";
+import { FavoritesProvider } from "@/components/providers/FavoritesProvider";
 
 import CookieBanner from "@/components/layout/CookieBanner";
 
@@ -45,15 +46,17 @@ export default function RootLayout({
           <a href="#main-content" className="skip-link">Pular para o conteúdo principal</a>
         <AuthProvider>
           <AuthModalProvider>
-            <Navbar />
-            <main id="main-content" className="grow" tabIndex={-1}>
-              {children}
-            </main>
-            <Footer />
-            <AccessibilityPanel />
-            <CookieBanner />
-            <AriaAnnouncer />
-            <ToastContainer />
+            <FavoritesProvider>
+              <Navbar />
+              <main id="main-content" className="grow" tabIndex={-1}>
+                {children}
+              </main>
+              <Footer />
+              <AccessibilityPanel />
+              <CookieBanner />
+              <AriaAnnouncer />
+              <ToastContainer />
+            </FavoritesProvider>
           </AuthModalProvider>
         </AuthProvider>
           </ThemeProvider>

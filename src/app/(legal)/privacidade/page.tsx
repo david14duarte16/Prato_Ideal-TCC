@@ -2,24 +2,17 @@
 
 import { motion } from "framer-motion";
 import { Shield, Lock, Eye, Bell } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
 // inside the component:
 export default function PoliticaPrivacidade() {
-  const [lgpdEmail, setLgpdEmail] = useState("");
   const [lgpdAction, setLgpdAction] = useState("export");
   const [requestStatus, setRequestStatus] = useState<"idle" | "loading" | "success">("idle");
   
   const { data: session, status } = useSession();
   const { openAuthModal } = useAuthModal();
-
-  useEffect(() => {
-    if (session?.user) {
-      setLgpdEmail(session.user.email || "");
-    }
-  }, [session]);
 
   const handleLgpdRequest = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +20,6 @@ export default function PoliticaPrivacidade() {
     // Simulate API call
     setTimeout(() => {
       setRequestStatus("success");
-      setLgpdEmail("");
     }, 1500);
   };
 
@@ -125,10 +117,10 @@ export default function PoliticaPrivacidade() {
                   <input 
                     type="email" 
                     required
-                    value={lgpdEmail}
-                    onChange={(e) => setLgpdEmail(e.target.value)}
-                    placeholder="seu.email@exemplo.com"
-                    className="w-full p-3 rounded-xl border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all"
+                    readOnly
+                    value={session?.user?.email || ""}
+                    placeholder="Faça login para preencher"
+                    className="w-full p-3 rounded-xl border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed outline-none transition-all"
                   />
                 </div>
                 <div>
