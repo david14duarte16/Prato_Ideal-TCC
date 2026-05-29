@@ -77,13 +77,14 @@ export default function FavoritosPage() {
                   exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Link href={`/restaurante/${fav.place_id}`} className="group block h-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 rounded-[1.5rem] relative">
-                    <article className="bg-white dark:bg-zinc-900 rounded-[1.5rem] border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-red-500/10 transition-all duration-300 h-full flex flex-col">
+                  <Link href={`/restaurante/${fav.place_id}`} className="group block h-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50 rounded-3xl relative">
+                    <article className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-red-500/10 transition-all duration-300 h-full flex flex-col">
                       <div className="relative h-48 w-full overflow-hidden">
                         <Image 
                           src={fav.image} 
                           alt={fav.name} 
                           fill 
+                          unoptimized
                           className="object-cover group-hover:scale-110 transition-transform duration-700" 
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
@@ -104,7 +105,7 @@ export default function FavoritosPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        toggleFavorite(fav, e as any);
+                        toggleFavorite(fav, e);
                       }}
                       className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-lg text-red-500 hover:bg-white hover:scale-110 active:scale-95 transition-all z-10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/50"
                       aria-label="Remover dos favoritos"

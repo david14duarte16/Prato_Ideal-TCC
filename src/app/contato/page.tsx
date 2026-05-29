@@ -2,15 +2,36 @@
 
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
 export default function Contato() {
   const [formState, setFormState] = useState({ name: "", email: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  
+  const { data: session, status } = useSession();
+  const { openAuthModal } = useAuthModal();
+
+  useEffect(() => {
+    if (session?.user) {
+      setFormState(prev => ({
+        ...prev,
+        name: session.user?.name || prev.name,
+        email: session.user?.email || prev.email
+      }));
+    }
+  }, [session]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (status === "unauthenticated") {
+      openAuthModal("Para nos enviar uma mensagem, por favor, faça login.");
+      return;
+    }
+
     setIsSubmitting(true);
     // Simulating API call
     setTimeout(() => {

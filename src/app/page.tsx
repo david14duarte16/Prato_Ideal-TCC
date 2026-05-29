@@ -72,7 +72,7 @@ export default async function Home(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 pt-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 pt-36 md:pt-20">
       {/* Breadcrumb Bar */}
       <div className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">

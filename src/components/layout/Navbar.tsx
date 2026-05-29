@@ -179,10 +179,10 @@ export default function Navbar() {
     <header 
       id="main-nav"
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-200 dark:border-zinc-800 shadow-sm" : "bg-white dark:bg-zinc-950 border-b border-transparent"
+        scrolled ? "bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-gray-200 dark:border-zinc-800 shadow-sm" : "bg-white dark:bg-zinc-950 border-b border-transparent"
       }`}
     >
-      <nav aria-label="Navegação principal" className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
+      <nav aria-label="Navegação principal" className="max-w-7xl mx-auto flex flex-wrap items-center justify-between px-4 sm:px-6 lg:px-8 py-3 md:py-0 md:h-20">
         
         {/* Logo & Mock Indicator */}
         <div className="flex items-center gap-4">
@@ -192,10 +192,10 @@ export default function Navbar() {
               alt="Logo Prato Ideal"
               width={40}
               height={40}
-              className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+              className="object-contain transition-transform duration-500 group-hover:rotate-15"
               priority
             />
-            <span className="text-xl font-extrabold tracking-tight font-outfit bg-gradient-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent">
+            <span className="text-xl font-extrabold tracking-tight font-outfit bg-linear-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent">
               Prato Ideal
             </span>
           </Link>
@@ -215,11 +215,11 @@ export default function Navbar() {
 
         {/* Unified Search Bar (Zomato Style) */}
         <div 
-          className="hidden md:flex flex-1 max-w-2xl mx-8 relative"
+          className="order-last md:order-0 w-full md:w-auto md:flex-1 max-w-2xl md:mx-8 mt-3 md:mt-0 relative flex"
           role="search"
           aria-label="Busca de restaurantes e localidades"
         >
-          <div className="w-full flex items-center bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 rounded-2xl h-14 transition-all duration-300 shadow-sm hover:shadow-md dark:shadow-none overflow-visible">
+          <div className="w-full flex items-center bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 rounded-2xl h-12 md:h-14 transition-all duration-300 shadow-sm hover:shadow-md dark:shadow-none overflow-visible">
             
             {/* Location Section */}
             <div ref={locationRef} className="relative flex items-center h-full flex-[0.4] min-w-[150px]">
@@ -417,7 +417,14 @@ export default function Navbar() {
                 className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-zinc-700 focus-visible:ring-2 focus-visible:ring-red-500"
               >
                 {session.user.image ? (
-                  <Image src={session.user.image} alt={session.user.name || "User"} width={32} height={32} className="w-8 h-8 rounded-full border border-gray-200" />
+                  <Image 
+                    src={session.user.image} 
+                    alt={session.user.name || "User"} 
+                    width={32} 
+                    height={32} 
+                    unoptimized={session.user.image.includes('armazenamentopratoideal') || session.user.image.includes('blob.core.windows.net')}
+                    className="w-8 h-8 rounded-full border border-gray-200 object-cover" 
+                  />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold text-xs capitalize">
                     {session.user.name?.charAt(0) || "U"}

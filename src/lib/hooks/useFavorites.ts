@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { mockFavoritesAPIResponse } from "../mockData";
 import { apiClient } from "../services/apiClient";
+import { getRestaurantById } from "../services/restaurantService";
 import { announce } from "../../components/accessibility/AriaAnnouncer";
+import { useRouter } from "next/navigation";
 
 export interface FavoriteItem {
   id: string; // The ID compatible with the internal interface
@@ -13,25 +14,58 @@ export interface FavoriteItem {
   image: string;
 }
 
-// Fallback to local storage only while API is disconnected
 export function useFavorites() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchFavorites = () => {
+    const fetchFavorites = async () => {
+      if (status === "loading") return;
+
+      if (!session || !(session.user as any)?.accessToken || !(session.user as any)?.id) {
+        setFavorites([]);
+        setIsLoaded(true);
+        return;
+      }
+
       try {
-        const userId = session?.user?.email || "guest";
-        const stored = localStorage.getItem(`saborcia_favorites_${userId}`);
-        if (stored) {
-          setFavorites(JSON.parse(stored));
-        } else {
-          setFavorites([]);
-        }
+        const token = (session.user as any).accessToken;
+        const userId = (session.user as any).id;
+        
+        // Fetch user data to get the Favoritos array
+        const res = await apiClient.get(`/Usuario/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const favIds: string[] = res.data.Favoritos || [];
+        
+        // Fetch details from Google Places for each favorite id
+        // Running in parallel for performance
+        const results = await Promise.all(
+          favIds.map(async (placeId) => {
+            try {
+              const details = await getRestaurantById(placeId);
+              if (details) {
+                return {
+                  id: placeId,
+                  place_id: placeId,
+                  name: details.name,
+                  image: details.image || "",
+                };
+              }
+            } catch (err) {
+              console.error(`Failed to fetch details for place ${placeId}`, err);
+            }
+            return null;
+          })
+        );
+        
+        setFavorites(results.filter((r): r is FavoriteItem => r !== null));
       } catch (error) {
-        console.error("Failed to load favorites from localStorage", error);
+        console.error("Failed to load favorites from API", error);
         setFavorites([]);
       } finally {
         setIsLoaded(true);
@@ -39,7 +73,7 @@ export function useFavorites() {
     };
 
     fetchFavorites();
-  }, [session]);
+  }, [session, status]);
 
   const toggleFavorite = async (item: FavoriteItem, e?: React.MouseEvent) => {
     if (e) {
@@ -47,26 +81,40 @@ export function useFavorites() {
       e.stopPropagation();
     }
     
+    if (!session || !(session.user as any)?.accessToken) {
+      announce("Faça login para favoritar restaurantes");
+      router.push("/login");
+      return;
+    }
+    
+    const token = (session.user as any).accessToken;
     const exists = favorites.some(f => f.place_id === item.place_id || f.id === item.id);
     const message = exists 
       ? `${item.name} removido dos favoritos` 
       : `${item.name} adicionado aos favoritos`;
       
+    // Optimistic update
     const nextFavorites = exists 
       ? favorites.filter(f => f.place_id !== item.place_id && f.id !== item.id)
       : [...favorites, item];
       
     setFavorites(nextFavorites);
-    
-    // Save to localStorage
-    try {
-      const userId = session?.user?.email || "guest";
-      localStorage.setItem(`saborcia_favorites_${userId}`, JSON.stringify(nextFavorites));
-    } catch (err) {
-      console.error("Failed to save favorites to localStorage", err);
-    }
-
     setTimeout(() => announce(message), 0);
+    
+    // API Call
+    try {
+      if (exists) {
+        await apiClient.delete(`/Usuario/favoritos/${item.place_id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        await apiClient.post(`/Usuario/favoritos/${item.place_id}`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync favorite with API", err);
+    }
   };
 
   const isFavorite = (id: string) => favorites.some(f => f.place_id === id || f.id === id);

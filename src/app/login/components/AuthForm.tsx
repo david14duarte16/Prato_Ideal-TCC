@@ -85,10 +85,16 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
         setSuccessMsg("Conta criada com sucesso! Por favor, faça o login.");
       }
     } catch (err: any) {
-      console.error(err);
-      if (err.response?.data?.message || err.response?.data?.error) {
-         setError(err.response.data.message || err.response.data.error);
+      if (err.response) {
+         // O servidor respondeu com um status de erro (ex: 400, 500)
+         console.warn(`Aviso da API (${err.response.status}):`, err.response.data);
+         setError(err.response.data?.message || err.response.data?.error || `Erro interno no servidor (Status ${err.response.status}). Tente novamente mais tarde.`);
+      } else if (err.request) {
+         // A requisição foi feita mas não houve resposta (erro de rede)
+         console.warn("Sem resposta da API:", err.request);
+         setError("Não foi possível conectar ao servidor. Verifique sua conexão.");
       } else {
+         console.error("Erro na requisição:", err.message);
          setError("Ocorreu um erro ao criar a conta. Tente novamente.");
       }
     } finally {

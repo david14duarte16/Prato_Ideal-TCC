@@ -3,15 +3,29 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Ticket, X, Copy, Check } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { announce } from "@/components/accessibility/AriaAnnouncer";
 
 export default function PromoBanner() {
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   const handleCopy = () => {
     navigator.clipboard.writeText("PRATOIDEAL");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpenModal = () => {
+    if (!session) {
+      announce("Faça login para resgatar cupons");
+      router.push("/login");
+      return;
+    }
+    setShowModal(true);
   };
 
   return (
@@ -43,7 +57,7 @@ export default function PromoBanner() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-white text-red-600 hover:text-red-700 font-bold text-lg md:text-xl px-8 py-4 rounded-full shadow-lg transition-colors flex items-center gap-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
-              onClick={() => setShowModal(true)}
+              onClick={handleOpenModal}
             >
               <Ticket size={24} />
               <span>Pegar Meu Cupom</span>

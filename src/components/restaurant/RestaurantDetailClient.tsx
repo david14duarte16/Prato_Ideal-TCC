@@ -57,7 +57,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
     setLocalReviews(restaurant.reviews || []);
   }
 
-  const [newReview, setNewReview] = useState({ rating: 5, comment: "", userName: "", file: null as File | null });
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "", userName: "", files: [] as File[] });
   const [showReviewForm, setShowReviewForm] = useState(false);
 
   // Lightbox state
@@ -142,8 +142,10 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
           formData.append('Comentario', newReview.comment);
           formData.append('Data', new Date().toISOString());
           
-          if (newReview.file) {
-            formData.append('Fotos', newReview.file);
+          if (newReview.files && newReview.files.length > 0) {
+            newReview.files.forEach(file => {
+              formData.append('Fotos', file);
+            });
           }
           
           const headers: HeadersInit = {};
@@ -176,10 +178,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
       }
       
       // Atualização otimista na tela
-      let photoUrl = null;
-      if (newReview.file) {
-        photoUrl = URL.createObjectURL(newReview.file);
-      }
+      const photoUrls = newReview.files.map(f => URL.createObjectURL(f));
 
       const review = {
         id: `local-${Date.now()}`,
@@ -189,7 +188,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
         date: new Date().toLocaleDateString('pt-BR'),
         userEmail: session?.user?.email || "guest",
         userImage: session?.user?.image,
-        photos: photoUrl ? [photoUrl] : [],
+        photos: photoUrls,
         restaurantId: restaurant.id,
         restaurantName: restaurant.name
       };
@@ -198,7 +197,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
       setLocalReviews(updated);
       localStorage.setItem(`reviews_${restaurant.id}`, JSON.stringify(updated));
       
-      setNewReview({ rating: 5, comment: "", userName: "", file: null });
+      setNewReview({ rating: 5, comment: "", userName: "", files: [] });
       setShowReviewForm(false);
       toast("Avaliação publicada com sucesso!", "success");
     } catch (error) {
@@ -224,13 +223,14 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
           src={activePhoto}
           alt={restaurant.name}
           fill
+          unoptimized
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           sizes="100vw"
           priority
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
         
-        <div className="absolute bottom-0 left-0 p-8 w-full flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="absolute bottom-0 left-0 p-5 md:p-8 w-full flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="text-white">
             <h1 className="text-4xl md:text-5xl font-bold font-outfit mb-2">{restaurant.name}</h1>
             <div className="flex items-center gap-4 text-gray-200">
@@ -295,7 +295,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
         <div className="lg:col-span-2 space-y-8">
           
           {/* About Section */}
-          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
+          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 md:p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
             <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Sobre o Restaurante</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
               {restaurant.description}
@@ -304,7 +304,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
 
           {/* Photo Gallery */}
           {restaurant.photos.length > 1 && (
-            <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
+            <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 md:p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
               <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">Fotos</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {restaurant.photos.map((photo, index) => (
@@ -315,7 +315,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                     aria-pressed={activePhoto === photo}
                     className={`relative h-24 md:h-32 rounded-2xl overflow-hidden transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500 ${activePhoto === photo ? 'ring-4 ring-red-500 ring-offset-2 scale-95' : 'hover:scale-105 hover:shadow-lg opacity-80 hover:opacity-100'}`}
                   >
-                    <Image src={photo} alt={`Foto ${index + 1}`} fill className="object-cover" />
+                    <Image src={photo} alt={`Foto ${index + 1}`} fill unoptimized className="object-cover" />
                   </button>
                 ))}
               </div>
@@ -323,7 +323,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
           )}
 
           {/* Reviews Section */}
-          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
+          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 md:p-8 shadow-sm border border-gray-100 dark:border-zinc-800">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Avaliações</h2>
               <button 
@@ -370,7 +370,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                         </button>
                       </div>
                     ) : (
-                      <form onSubmit={handleSubmitReview} className="bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 p-8 rounded-3xl shadow-lg shadow-gray-200/50 dark:shadow-none mt-4 relative">
+                      <form onSubmit={handleSubmitReview} className="bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 p-5 md:p-8 rounded-3xl shadow-lg shadow-gray-200/50 dark:shadow-none mt-4 relative">
                         <div className="absolute -top-3 left-10 w-6 h-6 bg-white dark:bg-zinc-800 border-t border-l border-gray-100 dark:border-zinc-700 rotate-45"></div>
                         <h3 className="font-semibold text-gray-800 dark:text-white mb-4">Sua avaliação</h3>
                         <div className="flex gap-2 mb-4">
@@ -401,14 +401,20 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                         />
                         <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Anexar Foto (Opcional)
+                            Anexar Fotos (Máximo de 5)
                           </label>
                           <input 
                             type="file" 
                             accept="image/*"
+                            multiple
                             onChange={(e) => {
-                              const file = e.target.files?.[0] || null;
-                              setNewReview({...newReview, file});
+                              const selectedFiles = Array.from(e.target.files || []);
+                              if (selectedFiles.length > 5) {
+                                toast("Limite excedido: Você só pode anexar no máximo 5 fotos.", "error");
+                                e.target.value = ''; // Reseta o input
+                                return;
+                              }
+                              setNewReview({...newReview, files: selectedFiles});
                             }}
                             className="w-full text-sm text-gray-500 dark:text-gray-400
                               file:mr-4 file:py-2 file:px-4
@@ -419,6 +425,11 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                               hover:file:bg-red-100 dark:hover:file:bg-red-500/20
                               cursor-pointer"
                           />
+                          {newReview.files.length > 0 && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              {newReview.files.length} foto(s) selecionada(s).
+                            </p>
+                          )}
                         </div>
                         <div className="mt-4 flex justify-end gap-3">
                           <button type="button" onClick={() => setShowReviewForm(false)} className="px-5 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium transition-colors">Cancelar</button>
@@ -511,14 +522,13 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
               </button>
             )}
           </motion.section>
-
-        </div>
+        </div>
 
         {/* Sidebar Column */}
         <div className="lg:col-span-1 space-y-8">
           
           {/* Info Card */}
-          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-zinc-800 sticky top-24">
+          <motion.section variants={fadeInUp} className="bg-white dark:bg-zinc-900 rounded-3xl p-5 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-zinc-800 sticky top-24">
             <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Informações</h3>
             
             <ul className="space-y-6">
@@ -526,7 +536,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                 <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
                   <Clock size={20} />
                 </div>
-                <div>
+                <div className="w-full">
                   <p className="text-sm text-gray-500 font-medium mb-1">Horário de Funcionamento</p>
                   {restaurant.openingHours && restaurant.openingHours.length > 0 ? (
                     <div className="text-gray-900 font-medium text-sm w-full mt-2 flex flex-col gap-1">
@@ -535,17 +545,15 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                         const day = parts[0];
                         const time = parts.length > 1 ? parts.slice(1).join(': ') : '';
                         
-                        // O Google normalmente retorna de Segunda a Domingo (index 0 a 6). 
-                        // O getDay() retorna 0 pra Domingo, 1 pra Segunda, etc.
                         const isToday = idx === (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
 
                         return (
                           <div 
                             key={idx} 
-                            className={`flex justify-between items-center py-1.5 border-b border-dashed border-gray-100 last:border-0 ${isToday ? "bg-green-50/50 px-2 rounded-lg -mx-2 shadow-xs ring-1 ring-green-100/50" : ""}`}
+                            className={`flex flex-col xl:flex-row justify-between xl:items-start gap-1 py-2 border-b border-dashed border-gray-100 last:border-0 ${isToday ? "bg-green-50/50 px-3 rounded-lg -mx-3 shadow-sm ring-1 ring-green-100/50" : ""}`}
                           >
-                            <span className={`capitalize ${isToday ? "font-bold text-green-700" : "text-gray-500 font-normal"}`}>{day}</span>
-                            <span className={isToday ? "font-black text-green-700 font-outfit tracking-wide" : "text-gray-800"}>
+                            <span className={`capitalize shrink-0 xl:w-28 mt-0.5 ${isToday ? "font-bold text-green-700" : "text-gray-500 font-normal"}`}>{day}</span>
+                            <span className={`xl:text-right leading-relaxed ${isToday ? "font-black text-green-700 font-outfit tracking-wide" : "text-gray-800"}`}>
                               {time || hour}
                             </span>
                           </div>

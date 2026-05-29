@@ -4,12 +4,13 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Camera, MapPin, Calendar, Edit3, Shield, Star, Heart, Clock, ChevronRight, Lock, Key, Check, AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/layout/Navbar";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { ReviewItem } from "@/lib/services/restaurantService";
 import { Badge } from "@/components/ui/Badge";
 import { getUserLevelData, GAMIFICATION_LEVELS } from "@/lib/utils/gamification";
+import { announce } from "@/components/accessibility/AriaAnnouncer";
 import Link from "next/link";
 
 const LEVEL_INDEX: Record<string, number> = { gray: 0, blue: 1, purple: 2, amber: 3 };
@@ -32,7 +33,7 @@ const BACKGROUND_OPTIONS = [
 ];
 
 export default function PerfilPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const { favorites: realFavorites, isLoaded: isFavLoaded } = useFavorites();
   const [activeTab, setActiveTab] = useState("activity");
   const [showAllActivity, setShowAllActivity] = useState(false);
@@ -51,7 +52,10 @@ export default function PerfilPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: "", new: "", confirm: "" });
   const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [isEmailVerified, setIsEmailVerified] = useState(true);
+  const [isEmailVerified] = useState(true);
+
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -74,15 +78,15 @@ export default function PerfilPage() {
       let userReviews: ReviewItem[] = [];
       const fetchApiReviews = async () => {
         try {
-          if (session?.user && (session.user as any).accessToken) {
+          if (session?.user && (session.user as { accessToken?: string; id?: string }).accessToken) {
             const { apiClient } = await import('@/lib/services/apiClient');
-            const token = (session.user as any).accessToken;
+            const token = (session.user as { accessToken?: string; id?: string }).accessToken;
             const res = await apiClient.get('/Review/usuario', {
               headers: { Authorization: `Bearer ${token}` }
             });
             
             if (res.data && Array.isArray(res.data)) {
-              userReviews = res.data.map((r: any) => ({
+              userReviews = res.data.map((r: { Id: string; IdRestaurante: string; IdUsuario: string; Nota: number; Comentario: string }) => ({
                 id: r.Id.toString(),
                 restaurantId: r.IdRestaurante,
                 restaurantName: "Restaurante Avaliado", // We don't have the name from the API, we'd need to fetch it or leave it generic
@@ -150,6 +154,50 @@ export default function PerfilPage() {
         setPasswordSuccess(false);
         setPasswordForm({ current: "", new: "", confirm: "" });
       }, 2000);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!session || !(session.user as { accessToken?: string; id?: string })?.accessToken) {
+      announce("Você precisa estar logado para atualizar a foto.");
+      return;
+    }
+
+    try {
+      setIsUploadingPhoto(true);
+      const token = (session.user as { accessToken?: string; id?: string }).accessToken;
+      const { apiClient } = await import('@/lib/services/apiClient');
+      
+      const formData = new FormData();
+      formData.append("foto", file);
+
+      await apiClient.put('/Usuario/foto', formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data" 
+        }
+      });
+
+      const userId = (session.user as { accessToken?: string; id?: string }).id;
+      const userRes = await apiClient.get(`/Usuario/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const newImageUrl = userRes.data.Foto;
+      await update({ image: newImageUrl });
+      
+      announce("Foto de perfil atualizada com sucesso!");
+    } catch (err) {
+      console.error("Erro ao fazer upload da foto:", err);
+      announce("Erro ao atualizar foto. Tente novamente.");
+    } finally {
+      setIsUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -252,7 +300,7 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
       <Navbar />
       
-      <div className="pt-32 pb-20 container mx-auto px-4 max-w-5xl">
+      <div className="pt-40 md:pt-32 pb-20 container mx-auto px-4 max-w-5xl">
         {/* Header/Cover Section */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -282,6 +330,7 @@ export default function PerfilPage() {
                   alt={name} 
                   width={160}
                   height={160}
+                  unoptimized={image.includes('armazenamentopratoideal') || image.includes('blob.core.windows.net')}
                   className="rounded-[2.5rem] border-8 border-white shadow-lg object-cover"
                 />
               ) : (
@@ -289,9 +338,27 @@ export default function PerfilPage() {
                   {name.charAt(0)}
                 </div>
               )}
-              <div className="absolute bottom-2 right-2 p-2 bg-gray-900/95 text-white rounded-xl shadow-lg border-2 border-white cursor-pointer hover:bg-red-500 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-red-500">
-                <Camera size={18} />
-              </div>
+              {!(session?.user as { provider?: string })?.provider?.includes('google') && !image?.includes('googleusercontent.com') && (
+                <>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 p-2 bg-gray-900/95 text-white rounded-xl shadow-lg border-2 border-white cursor-pointer hover:bg-red-500 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-red-500"
+                  >
+                    {isUploadingPhoto ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Camera size={18} />
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={handlePhotoUpload} 
+                  />
+                </>
+              )}
             </div>
 
             <div className="flex flex-col w-full relative mt-2">
@@ -409,7 +476,7 @@ export default function PerfilPage() {
                     }`}
                   >
                      <motion.div
-                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[20deg]"
+                       className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent skew-x-20"
                        animate={{ x: ['-200%', '200%'] }}
                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                      />
@@ -437,7 +504,7 @@ export default function PerfilPage() {
                 <Shield className="text-gray-700 w-6 h-6" />
               </h3>
               <div className="grid grid-cols-2 gap-4 relative z-10">
-                {GAMIFICATION_LEVELS.map((level: any, i: number) => {
+                {GAMIFICATION_LEVELS.map((level: { min: number; title: string; color: string; icon: string; humor: string; nextAt: number | null }, i: number) => {
                   const unlocked = reviews.length >= level.min;
                   
                   const colorMap: Record<string, string> = {
@@ -477,7 +544,7 @@ export default function PerfilPage() {
           </div>
 
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white dark:bg-zinc-900 p-2 rounded-3xl inline-flex flex-wrap gap-2 border border-gray-100 dark:border-zinc-800 shadow-sm mb-4">
+            <div className="bg-white dark:bg-zinc-900 p-2 rounded-3xl flex overflow-x-auto whitespace-nowrap hide-scrollbar gap-2 border border-gray-100 dark:border-zinc-800 shadow-sm mb-4 max-w-full">
               {["activity", "info", "reviews"].map((tab) => (
                 <button
                   key={tab}
@@ -612,14 +679,14 @@ export default function PerfilPage() {
                   ) : (
                     <div className="grid gap-4">
                       {reviews.map((r, i) => (
-                        <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow">
+                        <div key={i} className="bg-white p-6 rounded-4xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow">
                            <div className="flex-1 space-y-2">
                              <div className="flex justify-between items-start">
                                <Link href={`/restaurante/${r.restaurantId}`} className="font-bold text-lg text-gray-900 hover:text-red-500 transition-colors">
                                  {r.restaurantName}
                                </Link>
                                <span className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg flex items-center gap-2">
-                                 {(r as any).isCached && (
+                                 {(r as typeof r & { isCached?: boolean }).isCached && (
                                    <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                      <AlertCircle size={10} /> Cache Local
                                    </span>
@@ -632,7 +699,7 @@ export default function PerfilPage() {
                                  <Star key={j} size={14} className={j < (r.rating || 0) ? "fill-amber-500" : "text-gray-200"} />
                                ))}
                              </div>
-                             <p className="text-gray-600 text-sm italic">"{r.comment}"</p>
+                             <p className="text-gray-600 text-sm italic">&quot;{r.comment}&quot;</p>
                            </div>
                         </div>
                       ))}
@@ -741,7 +808,7 @@ export default function PerfilPage() {
                           setShowBgModal(false);
                         }
                       }}
-                      className={`relative aspect-video rounded-2xl overflow-hidden cursor-pointer transition-all ${!hasAccess ? 'opacity-70 grayscale-[50%]' : 'hover:scale-105 hover:shadow-lg hover:z-10'} ${selectedBg === bg.url ? 'ring-4 ring-red-500 ring-offset-2' : 'ring-1 ring-gray-200'}`}
+                      className={`relative aspect-video rounded-2xl overflow-hidden cursor-pointer transition-all ${!hasAccess ? 'opacity-70 grayscale-50' : 'hover:scale-105 hover:shadow-lg hover:z-10'} ${selectedBg === bg.url ? 'ring-4 ring-red-500 ring-offset-2' : 'ring-1 ring-gray-200'}`}
                     >
                       <Image src={bg.url} alt={bg.name} fill className="object-cover" />
                       {!hasAccess && (
@@ -779,7 +846,7 @@ export default function PerfilPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
+              className="bg-white rounded-4xl p-8 max-w-sm w-full shadow-2xl relative overflow-hidden"
             >
               <button 
                 onClick={() => setShowPasswordModal(false)}

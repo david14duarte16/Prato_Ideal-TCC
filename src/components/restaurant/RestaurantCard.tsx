@@ -36,6 +36,7 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
             src={restaurant.image}
             alt={`Foto do restaurante ${restaurant.name}`}
             fill
+            unoptimized
             className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />

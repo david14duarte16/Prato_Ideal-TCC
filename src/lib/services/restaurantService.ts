@@ -697,8 +697,19 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
   }
 
   if (!GOOGLE_MAPS_API_KEY) {
-    console.error("GOOGLE_MAPS_API_KEY não configurada.");
-    return null;
+    console.warn("GOOGLE_MAPS_API_KEY não configurada. Retornando dados fictícios para evitar quebra de layout.");
+    const fallback = MOCK_RESTAURANTS[0];
+    return {
+      ...fallback,
+      id,
+      address: `Rua Fictícia, 1000 - Centro, ${fallback.city} - ${fallback.state}`,
+      phone: "(11) 99999-9999",
+      coordinates: { lat: -23.5505, lng: -46.6333 },
+      photos: [fallback.image],
+      description: "Um ambiente acolhedor e moderno (Dados de demonstração).",
+      reviews: [],
+      openingHours: []
+    };
   }
 
   try {

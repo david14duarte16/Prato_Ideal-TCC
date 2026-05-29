@@ -54,7 +54,7 @@ export default async function SearchPage(props: {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pt-20">
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-36 md:pt-20">
       <Navbar />
       <main className="flex-1 pb-16">
         <RestaurantGrid 
