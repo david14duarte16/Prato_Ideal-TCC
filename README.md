@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍽️ Prato Ideal
 
-## Getting Started
+> **Conectando você aos melhores sabores e experiências gastronômicas da sua região.**
 
-First, run the development server:
+O **Prato Ideal** é uma plataforma inovadora desenvolvida para facilitar a descoberta de restaurantes incríveis. Integrada à API do Google Places, nossa aplicação permite que os usuários explorem estabelecimentos, visualizem avaliações, salvem seus favoritos e aproveitem promoções exclusivas de forma rápida, acessível e intuitiva.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 👨‍💻 Equipe de Desenvolvimento (TCC)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Este projeto foi idealizado e desenvolvido pelos seguintes membros:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **David Santos Duarte Neto**
+- **Hebert Daniel Souza Simões**
+- **Pedro Laurentino Okuma**
+- **Thales Paulino de Lima Albino**
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🚀 Principais Funcionalidades
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 📍 **Busca Inteligente:** Encontre restaurantes por categorias (Hambúrgueres, Pizzas, Japonês, Saudável) ou através de uma barra de busca otimizada.
+- ❤️ **Sistema de Favoritos:** Salve os lugares que você mais gostou no seu perfil para fácil acesso futuro.
+- ⭐ **Avaliações e Reviews:** Veja notas e depoimentos reais para fazer a melhor escolha na hora de sair.
+- ♿ **Acessibilidade de Ponta:** O site é totalmente preparado para leitores de tela e navegação por teclado, e conta com o VLibras integrado nativamente.
+- 🌓 **Modo Escuro (Dark Mode):** Uma interface elegante que se adapta automaticamente à preferência do sistema do usuário.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠️ Tecnologias Utilizadas
 
-## Deploy on Vercel
+O **Prato Ideal** é um projeto "Full-Stack" moderno construído com algumas das melhores ferramentas do mercado atual:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Front-end:** Next.js (App Router), React, Tailwind CSS, TypeScript
+- **Autenticação:** NextAuth.js (Login Google + Credenciais próprias)
+- **Integração:** Google Maps / Places API
+- **Back-end:** API REST em C# (.NET)
+- **Banco de Dados:** MongoDB (NoSQL)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+> *"A comida perfeita para o seu momento perfeito."*
