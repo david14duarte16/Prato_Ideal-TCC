@@ -52,12 +52,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         // Use Set to deduplicate IDs right from the API!
         const favIds: string[] = Array.from(new Set(res.data.Favoritos || []));
         
-        // Fetch details from Google Places for each favorite id
+        // Fetch details from the server-side API route for each favorite id
         const results = await Promise.all(
           favIds.map(async (placeId) => {
             try {
-              const details = await getRestaurantById(placeId as string);
-              if (details) {
+              const res = await fetch(`/api/restaurants/${placeId}`);
+              if (res.ok) {
+                const details = await res.json();
                 return {
                   id: placeId as string,
                   place_id: placeId as string,
@@ -106,48 +107,67 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     
     const token = (session.user as { accessToken?: string }).accessToken;
     
-    setFavorites(prevFavorites => {
-      const exists = prevFavorites.some(f => f.place_id === item.place_id || f.id === item.id);
-      const message = exists 
-        ? `${item.name} removido dos favoritos` 
-        : `${item.name} adicionado aos favoritos`;
+    // Avalia o estado atual baseado nas dependências para o side-effect
+    const exists = favorites.some(f => f.place_id === item.place_id || f.id === item.id);
+    const message = exists 
+      ? `${item.name} removido dos favoritos` 
+      : `${item.name} adicionado aos favoritos`;
         
-      // Optimistic update
-      const nextFavorites = exists 
+    setTimeout(() => announce(message), 0);
+
+    // Atualização Otimista: Não coloque side-effects dentro do setState!
+    setFavorites(prevFavorites => {
+      const currentExists = prevFavorites.some(f => f.place_id === item.place_id || f.id === item.id);
+      return currentExists 
         ? prevFavorites.filter(f => f.place_id !== item.place_id && f.id !== item.id)
         : [...prevFavorites, item];
-        
-      setTimeout(() => announce(message), 0);
-
-      // Fire and forget API Call to avoid blocking the state update
-      (async () => {
-        try {
-          if (exists) {
-            await apiClient.delete(`/Usuario/favoritos/${item.place_id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-          } else {
-            await apiClient.post(`/Usuario/favoritos/${item.place_id}`, {}, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-          }
-        } catch (error: unknown) {
-          const err = error as { response?: { status?: number, data?: unknown } };
-          console.error("Failed to sync favorite with API", err.response?.status, err.response?.data);
-          
-          // Rollback state since API failed
-          setFavorites(prevFavorites);
-          announce(`Erro ao atualizar favoritos. ${item.name} não foi salvo.`);
-          
-          // NOTA: Retiramos o signOut daqui. Se a API retornar 404 ao favoritar,
-          // pode significar que o idRestaurante não foi encontrado no backend.
-          // Não devemos deslogar o usuário por causa de um restaurante não encontrado.
-        }
-      })();
-
-      return nextFavorites;
     });
-  }, [session, router]);
+
+    // Chamada a API FORA do setState para evitar double-invoke no StrictMode
+    try {
+      if (exists) {
+        await apiClient.delete(`/Usuario/favoritos/${item.place_id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        await apiClient.post(`/Usuario/favoritos/${item.place_id}`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number, data?: unknown } };
+      
+      // Se estamos adicionando e a API retorna 409 (Já existe), ignoramos e consideramos sucesso
+      if (!exists && err.response?.status === 409) {
+        console.warn("Restaurante já estava nos favoritos no servidor (409). Ignorando erro.");
+        return;
+      }
+      
+      let errorMessage = `Erro ao atualizar favoritos. ${item.name} não foi salvo.`;
+      
+      if (err.response?.status === 404) {
+        // Usa console.warn ao invés de error para evitar quebrar a tela (overlay) no ambiente de dev do Next.js
+        console.warn(`[Favorites] 404 API: Restaurante '${item.name}' (${item.place_id}) não está registrado no banco de dados do backend. O backend não permite favoritar locais não avaliados/registrados.`);
+        errorMessage = `${item.name} ainda não pode ser favoritado pois não está registrado no banco de dados do sistema.`;
+      } else {
+        console.error("Failed to sync favorite with API", err.response?.status, err.response?.data);
+      }
+      
+      // Rollback do estado porque a API falhou
+      setFavorites(prevFavorites => {
+        const currentExists = prevFavorites.some(f => f.place_id === item.place_id || f.id === item.id);
+        if (exists && !currentExists) {
+          // Queríamos remover, falhou -> Adiciona de volta
+          return [...prevFavorites, item];
+        } else if (!exists && currentExists) {
+          // Queríamos adicionar, falhou -> Remove
+          return prevFavorites.filter(f => f.place_id !== item.place_id && f.id !== item.id);
+        }
+        return prevFavorites;
+      });
+      announce(errorMessage);
+    }
+  }, [session, router, favorites]);
 
   const isFavorite = useCallback((id: string) => {
     return favorites.some(f => f.place_id === id || f.id === id);
