@@ -2,6 +2,7 @@
 
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+
 import { RestaurantDetails } from "@/lib/services/restaurantService";
 import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send, Share2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
@@ -10,6 +11,16 @@ import { useAuthModal } from "@/components/providers/AuthModalProvider";
 import { apiClient } from "@/lib/services/apiClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/Toast";
+import { Map, AdvancedMarker, useMapsLibrary } from "@vis.gl/react-google-maps";
+
+interface ApiReview {
+  id?: string; Id?: string;
+  nota?: number; Nota?: number;
+  comentario?: string; Comentario?: string;
+  data?: string; Data?: string;
+  fotos?: string[]; Fotos?: string[];
+  idRestaurante?: string; IdRestaurante?: string;
+}
 
 interface Props {
   restaurant: RestaurantDetails;
@@ -60,11 +71,53 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
   const [newReview, setNewReview] = useState({ rating: 5, comment: "", userName: "", files: [] as File[] });
   const [showReviewForm, setShowReviewForm] = useState(false);
 
+  // Distance Matrix
+  const [distanceInfo, setDistanceInfo] = useState<{distance: string, duration: string} | null>(null);
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
+  const routesLibrary = useMapsLibrary("routes");
+
+  const calculateDistance = () => {
+    if (!routesLibrary || !navigator.geolocation) {
+      toast("Não foi possível acessar os serviços de mapa ou localização.", "error");
+      return;
+    }
+    
+    setIsCalculatingDistance(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const service = new routesLibrary.DistanceMatrixService();
+        service.getDistanceMatrix(
+          {
+            origins: [{ lat: position.coords.latitude, lng: position.coords.longitude }],
+            destinations: [restaurant.coordinates],
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (response, status) => {
+            setIsCalculatingDistance(false);
+            if (status === "OK" && response && response.rows[0].elements[0].status === "OK") {
+              const element = response.rows[0].elements[0];
+              setDistanceInfo({
+                distance: element.distance.text,
+                duration: element.duration.text
+              });
+            } else {
+              toast("Não foi possível calcular a distância.", "error");
+            }
+          }
+        );
+      },
+      () => {
+        setIsCalculatingDistance(false);
+        toast("Permissão de localização negada ou indisponível.", "error");
+      }
+    );
+  };
+
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
-  const allReviewPhotos = localReviews?.flatMap(r => r.photos || []) || [];
+  const allReviewPhotos = localReviews?.flatMap(r => (r as { photos?: string[] }).photos || []) || [];
 
   const openLightbox = (photoUrl: string) => {
     const index = allReviewPhotos.indexOf(photoUrl);
@@ -79,7 +132,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
       try {
         const res = await apiClient.get(`/Review/restaurante/${restaurant.id}`);
         if (res.data && Array.isArray(res.data) && isSubscribed) {
-          const mapped = res.data.map((r: any, index: number) => {
+          const mapped = res.data.map((r: ApiReview, index: number) => {
             // C# APIs often serialize to PascalCase or camelCase depending on the JSON formatter
             const id = r.id || r.Id || `api-review-${index}-${Date.now()}`;
             const rating = r.nota || r.Nota || 0;
@@ -108,7 +161,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
           });
           // Prepend new mock reviews to existing restaurant.reviews just for display
           const combined = [...mapped, ...(restaurant.reviews || [])];
-          setLocalReviews(combined);
+          setLocalReviews(combined as unknown as typeof restaurant.reviews);
         }
       } catch (e) {
         console.error("Failed to fetch reviews", e);
@@ -123,16 +176,15 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
     };
     fetchReviews();
     return () => { isSubscribed = false; };
-  }, [restaurant.id]);
+  }, [restaurant]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReview.comment.trim()) return;
     
     try {
-      if (session?.user && (session.user as any).id) {
-        const userId = (session.user as any).id;
-        const token = (session.user as any).accessToken;
+      if (session?.user && (session.user as { id?: string }).id) {
+        const token = (session.user as { accessToken?: string }).accessToken;
         // Salva na API Render
         try {
           const formData = new FormData();
@@ -172,7 +224,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
               throw new Error(`API Error ${response.status}: ${errText}`);
             }
           }
-        } catch (apiError: any) {
+        } catch (apiError: unknown) {
           console.error("Erro na API ao enviar avaliação:", apiError);
         }
       }
@@ -385,13 +437,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                             </button>
                           ))}
                         </div>
-                        <input 
-                          type="text" 
-                          placeholder={mounted ? (session?.user?.name || "Seu nome") : "Seu nome"} 
-                          value={newReview.userName}
-                          onChange={(e) => setNewReview({...newReview, userName: e.target.value})}
-                          className="w-full mb-3 p-3 rounded-xl border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-zinc-700 dark:text-white" 
-                        />
+
                         <textarea 
                           placeholder="Conte-nos sobre sua experiência..." 
                           value={newReview.comment}
@@ -473,15 +519,15 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                       </div>
                     </div>
                     <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
-                    {review.photos && review.photos.length > 0 && (
+                    {(review as { photos?: string[] }).photos && (review as { photos?: string[] }).photos!.length > 0 && (
                       <div className="mt-4 flex gap-3 overflow-x-auto pb-2 snap-x">
-                        {review.photos.map((photo: string, i: number) => (
+                        {(review as { photos?: string[] }).photos!.map((photo: string, i: number) => (
                            <div 
                              key={i} 
                              onClick={() => openLightbox(photo)}
                              className="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm snap-start group cursor-pointer"
                            >
-                             <img src={photo} alt={`Foto enviada por ${review.userName}`} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300" />
+                             <Image src={photo} alt={`Foto enviada por ${review.userName}`} fill unoptimized className="object-cover group-hover:scale-110 transition-transform duration-300" />
                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                            </div>
                         ))}
@@ -522,7 +568,7 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
               </button>
             )}
           </motion.section>
-        </div>
+        </div>
 
         {/* Sidebar Column */}
         <div className="lg:col-span-1 space-y-8">
@@ -587,22 +633,39 @@ export default function RestaurantDetailClient({ restaurant }: Props) {
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Endereço</p>
                   <p className="text-gray-900 dark:text-white font-medium leading-relaxed">{restaurant.address}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{restaurant.distance}</p>
+
+                  {distanceInfo ? (
+                    <div className="mt-3 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl p-3">
+                      <p className="text-sm text-red-700 dark:text-red-400 font-semibold flex items-center gap-2">
+                        <Navigation size={16} />
+                        A {distanceInfo.duration} de carro ({distanceInfo.distance})
+                      </p>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={calculateDistance} 
+                      disabled={isCalculatingDistance}
+                      className="mt-3 w-full text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 border border-red-100 dark:border-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                    >
+                      <Navigation size={16} className={isCalculatingDistance ? "animate-pulse" : ""} />
+                      {isCalculatingDistance ? "Calculando..." : "Calcular tempo de viagem da minha localização"}
+                    </button>
+                  )}
                 </div>
               </li>
             </ul>
 
             <div className="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800 flex flex-col gap-3">
               <div className="w-full h-64 bg-gray-100 dark:bg-zinc-800 rounded-2xl overflow-hidden relative border border-gray-200/50 dark:border-zinc-700">
-                <iframe
-                  title="Mapa do Restaurante"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://maps.google.com/maps?q=${restaurant.coordinates.lat},${restaurant.coordinates.lng}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                ></iframe>
+                <Map 
+                  defaultCenter={restaurant.coordinates} 
+                  defaultZoom={15} 
+                  mapId="DEMO_MAP_ID"
+                  disableDefaultUI={true}
+                  gestureHandling="cooperative"
+                >
+                  <AdvancedMarker position={restaurant.coordinates} />
+                </Map>
               </div>
               <a 
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.name + ', ' + restaurant.address)}`}

@@ -35,7 +35,7 @@ export default function TermosDeUso() {
           </p>
           <a 
             href="/termos_de_uso_prato_ideal.pdf" 
-            download="Termos_de_Uso_Sabor_e_Cia.pdf"
+            download="termos de uso prato ideal.pdf"
             className="shrink-0 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-sm hover:shadow-md"
           >
             <FileText size={20} />
@@ -52,7 +52,7 @@ export default function TermosDeUso() {
             <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 p-8 text-center bg-gray-50">
               <FileText size={48} className="mb-4 text-gray-300" />
               <p className="mb-4 font-medium text-lg text-gray-700">Seu navegador não suporta visualização de PDF integrada.</p>
-              <a href="/termos_de_uso_prato_ideal.pdf" download className="text-red-500 font-bold hover:underline">
+              <a href="/termos_de_uso_prato_ideal.pdf" download="termos de uso prato ideal.pdf" className="text-red-500 font-bold hover:underline">
                 Clique aqui para baixar o arquivo
               </a>
             </div>

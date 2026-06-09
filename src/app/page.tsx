@@ -3,21 +3,22 @@ import RestaurantGrid from "@/components/restaurant/RestaurantGrid";
 import RestaurantCarousel from "@/components/restaurant/RestaurantCarousel";
 import CollectionsSection from "@/components/home/CollectionsSection";
 import PromoBanner from "@/components/home/PromoBanner";
-import { searchRestaurants, RestaurantCard } from "@/lib/services/restaurantService";
+import { searchRestaurants, getNearbyRestaurants, RestaurantCard } from "@/lib/services/restaurantService";
 import { normalize } from "@/lib/utils";
 import { Restaurant, mockRestaurants } from "@/lib/mockData";
 
 export default async function Home(props: { 
-  searchParams: Promise<{ loc?: string; q?: string }> 
+  searchParams: Promise<{ loc?: string; q?: string; lat?: string; lng?: string }> 
 }) {
   const searchParams = await props.searchParams;
   const locationName = searchParams.loc || "São Paulo";
   const query = (searchParams.q || "").trim();
-
-
+  const lat = searchParams.lat ? parseFloat(searchParams.lat) : undefined;
+  const lng = searchParams.lng ? parseFloat(searchParams.lng) : undefined;
   
   let searchResults: Restaurant[] = [];
-  const isSearchMode = !!query;
+  let nextPageToken: string | undefined = undefined;
+  const isSearchMode = !!query || (lat !== undefined && lng !== undefined) || !!searchParams.loc;
   
   // Categorias para a Discovery View (quando não está pesquisando)
   let popularRestaurants: RestaurantCard[] = [];
@@ -26,11 +27,26 @@ export default async function Home(props: {
   let sushiRestaurants: RestaurantCard[] = [];
   let healthyRestaurants: RestaurantCard[] = [];
   let topRatedOpenRestaurants: RestaurantCard[] = [];
+  // Novas categorias
+  let meatRestaurants: RestaurantCard[] = [];
+  let italianRestaurants: RestaurantCard[] = [];
+  let cafeRestaurants: RestaurantCard[] = [];
+  let seafoodRestaurants: RestaurantCard[] = [];
 
   try {
     if (isSearchMode) {
       // Modo Pesquisa Pura
-      const rawRestaurants = await searchRestaurants(locationName, query);
+      let rawRestaurants: RestaurantCard[] = [];
+      if (lat !== undefined && lng !== undefined) {
+        const result = await getNearbyRestaurants(lat, lng, locationName);
+        rawRestaurants = result.restaurants;
+        nextPageToken = result.nextPageToken;
+      } else {
+        const result = await searchRestaurants(locationName, query);
+        rawRestaurants = result.restaurants;
+        nextPageToken = result.nextPageToken;
+      }
+      
       searchResults = rawRestaurants.map((r: RestaurantCard) => ({
         id: r.id,
         name: r.name,
@@ -44,13 +60,17 @@ export default async function Home(props: {
     } else {
       // Modo Descoberta (Home)
       // Buscamos categorias em paralelo para os carrosséis
-      const [popular, burgers, pizzas, sushis, healthy, topRatedOpenRaw] = await Promise.all([
-        searchRestaurants(locationName, "Melhores restaurantes"),
-        searchRestaurants(locationName, "Hambúrguer"),
-        searchRestaurants(locationName, "Pizzaria"),
-        searchRestaurants(locationName, "Japonês"),
-        searchRestaurants(locationName, "Saudável"),
-        searchRestaurants(locationName, "Melhores bem avaliados", { openNow: true })
+      const [popular, burgers, pizzas, sushis, healthy, topRatedOpenRaw, meats, italians, cafes, seafoods] = await Promise.all([
+        searchRestaurants(locationName, `Melhores restaurantes em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Hambúrguer em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Pizzaria em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Japonês em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Saudável em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Melhores bem avaliados em ${locationName}`, { openNow: true }).then(r => r.restaurants),
+        searchRestaurants(locationName, `Churrascaria e Carnes em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Restaurante Italiano em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Cafeteria e Doceria em ${locationName}`).then(r => r.restaurants),
+        searchRestaurants(locationName, `Frutos do mar em ${locationName}`).then(r => r.restaurants)
       ]);
       
       popularRestaurants = popular;
@@ -59,6 +79,10 @@ export default async function Home(props: {
       sushiRestaurants = sushis;
       healthyRestaurants = healthy;
       topRatedOpenRestaurants = topRatedOpenRaw.filter(r => r.rating && r.rating >= 4.5);
+      meatRestaurants = meats;
+      italianRestaurants = italians;
+      cafeRestaurants = cafes;
+      seafoodRestaurants = seafoods;
     }
   } catch (error) {
     console.error("Erro ao carregar restaurantes na Home:", error);
@@ -79,7 +103,17 @@ export default async function Home(props: {
           <Link href="/" className="hover:text-red-500 transition-colors font-medium text-gray-600 dark:text-gray-300">
             Início
           </Link>
-          {(searchParams.loc || query) && (
+          
+          {query && !searchParams.loc && lat === undefined ? (
+            <>
+              <span className="text-gray-300 dark:text-gray-600">/</span>
+              <span className="text-gray-600 dark:text-gray-300 font-medium">Busca</span>
+              <span className="text-gray-300 dark:text-gray-600">/</span>
+              <span className="text-gray-400 dark:text-gray-500 italic">
+                Resultados para &ldquo;{query}&rdquo;
+              </span>
+            </>
+          ) : (searchParams.loc || lat !== undefined) ? (
             <>
               <span className="text-gray-300 dark:text-gray-600">/</span>
               <Link
@@ -88,16 +122,12 @@ export default async function Home(props: {
               >
                 {locationName}
               </Link>
-            </>
-          )}
-          {query && (
-            <>
               <span className="text-gray-300 dark:text-gray-600">/</span>
               <span className="text-gray-400 dark:text-gray-500 italic">
-                Restaurantes com &ldquo;{query}&rdquo;
+                {query ? `Restaurantes com "${query}"` : "Restaurantes"}
               </span>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -106,8 +136,12 @@ export default async function Home(props: {
           <div className="w-full mt-8">
             <RestaurantGrid 
               restaurants={searchResults} 
-              title={`Resultados para "${query}"`}
-              subtitle={`Encontrados ${searchResults.length} restaurantes em ${locationName}.`}
+              title={query ? `Resultados para "${query}"` : (searchParams.loc ? `Restaurantes em ${searchParams.loc}` : "Restaurantes próximos a você")}
+              initialNextPageToken={nextPageToken}
+              searchLat={lat}
+              searchLng={lng}
+              searchQuery={query}
+              locationName={locationName}
             />
           </div>
         ) : (
@@ -125,46 +159,90 @@ export default async function Home(props: {
             <CollectionsSection />
 
             {/* Carousels */}
-            <RestaurantCarousel 
-              title="Abertos Agora & Bem Avaliados" 
-              subtitle="Os melhores locais abertos neste momento."
-              restaurants={topRatedOpenRestaurants} 
-            />
+            {topRatedOpenRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Abertos Agora & Bem Avaliados" 
+                subtitle="Os melhores locais abertos neste momento."
+                restaurants={topRatedOpenRestaurants} 
+              />
+            )}
 
             <PromoBanner />
 
-            <RestaurantCarousel 
-              title="Mais Populares na Região" 
-              subtitle="Os queridinhos da galera que você precisa conhecer."
-              restaurants={popularRestaurants} 
-            />
+            {popularRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Mais Populares na Região" 
+                subtitle="Os queridinhos da galera que você precisa conhecer."
+                restaurants={popularRestaurants} 
+              />
+            )}
             
-            <RestaurantCarousel 
-              title="Hambúrgueres Incríveis" 
-              subtitle="Para matar aquela fome de um bom artesanal."
-              restaurants={burgerRestaurants} 
-            />
+            {meatRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Churrascarias e Carnes" 
+                subtitle="Para os apaixonados por um bom corte e churrasco de qualidade."
+                restaurants={meatRestaurants} 
+              />
+            )}
 
-            <RestaurantCarousel 
-              title="Noite da Pizza" 
-              subtitle="Classicas, diferentonas e sempre deliciosas."
-              restaurants={pizzaRestaurants} 
-            />
+            {burgerRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Hambúrgueres Incríveis" 
+                subtitle="Para matar aquela fome de um bom artesanal."
+                restaurants={burgerRestaurants} 
+              />
+            )}
 
-            <RestaurantCarousel 
-              title="Festival Japonês" 
-              subtitle="Sushis frescos e comida oriental autêntica."
-              restaurants={sushiRestaurants} 
-            />
+            {italianRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Culinária Italiana" 
+                subtitle="Massas frescas, cantinas tradicionais e o sabor da Itália."
+                restaurants={italianRestaurants} 
+              />
+            )}
+
+            {pizzaRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Noite da Pizza" 
+                subtitle="Classicas, diferentonas e sempre deliciosas."
+                restaurants={pizzaRestaurants} 
+              />
+            )}
+
+            {sushiRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Festival Japonês" 
+                subtitle="Sushis frescos e comida oriental autêntica."
+                restaurants={sushiRestaurants} 
+              />
+            )}
             
-            <RestaurantCarousel 
-              title="Opções Saudáveis" 
-              subtitle="Saladas, bowls e refeições leves para todos os dias."
-              restaurants={healthyRestaurants} 
-            />
+            {seafoodRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Frutos do Mar e Peixes" 
+                subtitle="Moquecas, peixes frescos e delícias direto do litoral."
+                restaurants={seafoodRestaurants} 
+              />
+            )}
+            
+            {cafeRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Cafeterias e Docerias" 
+                subtitle="Aquele café da tarde especial ou uma sobremesa irresistível."
+                restaurants={cafeRestaurants} 
+              />
+            )}
+
+            {healthyRestaurants.length > 0 && (
+              <RestaurantCarousel 
+                title="Opções Saudáveis" 
+                subtitle="Saladas, bowls e refeições leves para todos os dias."
+                restaurants={healthyRestaurants} 
+              />
+            )}
             
             {/* Se mock data ou api falharem ou não voltarem nada, mostraremos um aviso amigável se todas estiverem vazias */}
-            {popularRestaurants.length === 0 && burgerRestaurants.length === 0 && pizzaRestaurants.length === 0 && sushiRestaurants.length === 0 && healthyRestaurants.length === 0 && topRatedOpenRestaurants.length === 0 && (
+            {popularRestaurants.length === 0 && burgerRestaurants.length === 0 && pizzaRestaurants.length === 0 && sushiRestaurants.length === 0 && healthyRestaurants.length === 0 && topRatedOpenRestaurants.length === 0 && meatRestaurants.length === 0 && italianRestaurants.length === 0 && cafeRestaurants.length === 0 && seafoodRestaurants.length === 0 && (
               <div className="text-center py-20 px-4 text-gray-500 dark:text-gray-400">
                 <p className="text-xl font-medium mb-2">Nenhum restaurante encontrado em {locationName}.</p>
                 <p>Tente buscar por outra cidade usando o seletor no topo.</p>

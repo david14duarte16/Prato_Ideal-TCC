@@ -77,32 +77,38 @@ export default function SobreNos() {
           >
             {[
               {
+                nome: "Thales",
                 cargo: "Fiscal do Hambúrguer Artesanal",
-                frase: "“Se o pão desmonta, eu dou nota baixa.”"
+                frase: "“Se o pão desmonta, eu dou nota baixa.”",
+                foto: "/equipe/thales.jpg"
               },
               {
+                nome: "Pedro",
                 cargo: "CEO das Sobremesas",
-                frase: "“Não confio em restaurante sem brownie.”"
+                frase: "“Não confio em restaurante sem brownie.”",
+                foto: "/equipe/pedro.jpg"
               },
               {
+                nome: "Hebert",
                 cargo: "Analista de Molho da Casa",
-                frase: "“Pedi extra de molho por motivos profissionais.”"
+                frase: "“Pedi extra de molho por motivos profissionais.”",
+                foto: "/equipe/hebert.jpg"
               },
               {
-                cargo: "Diretora de Experiência de Rodízio",
-                frase: "“Avalio velocidade do garçom e reposição de frita.”"
+                nome: "David",
+                cargo: "Diretor de Experiência de Rodízio",
+                frase: "“Avalio velocidade do garçom e reposição de frita.”",
+                foto: "/equipe/david.jpg"
               }
             ].map((perfil, index) => (
               <div key={index} className="bg-gray-50 dark:bg-zinc-900/50 rounded-2xl p-5 flex flex-col items-center text-center shadow-sm border border-gray-100 dark:border-zinc-800/50 hover:shadow-md dark:hover:shadow-none transition-shadow">
-                <div className="w-20 h-20 bg-gray-200 dark:bg-zinc-800 rounded-full mb-3 overflow-hidden border-4 border-white dark:border-zinc-900 shadow-sm flex items-center justify-center shrink-0">
-                  <span className="text-gray-400 dark:text-gray-500 text-[10px] font-bold">FOTO</span>
+                <div className="w-20 h-20 bg-gray-200 dark:bg-zinc-800 rounded-full mb-3 overflow-hidden border-4 border-white dark:border-zinc-900 shadow-sm flex items-center justify-center shrink-0 relative">
+                  <Image src={perfil.foto} alt={perfil.nome} fill sizes="80px" className="object-cover" />
                 </div>
-                <input 
-                  type="text" 
-                  placeholder="[NOME]" 
-                  className="bg-transparent font-bold text-gray-900 dark:text-white text-center w-full focus:outline-none mb-1 text-sm border-b border-dashed border-gray-300 dark:border-zinc-700 focus:border-red-500 pb-1"
-                />
-                <span className="text-[10px] uppercase font-black tracking-widest text-red-500 mb-2">{perfil.cargo}</span>
+                <h3 className="font-bold text-gray-900 dark:text-white text-center w-full mb-1 text-sm border-b border-dashed border-gray-300 dark:border-zinc-700 pb-1">
+                  {perfil.nome}
+                </h3>
+                <span className="text-[10px] uppercase font-black tracking-widest text-red-500 mb-2 mt-2">{perfil.cargo}</span>
                 <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-auto px-1">{perfil.frase}</p>
               </div>
             ))}

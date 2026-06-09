@@ -19,11 +19,13 @@ export async function GET(request: Request) {
     let restaurants;
     
     if (q || loc) {
-      restaurants = await searchRestaurants(loc || "São Paulo", q || undefined);
+      const result = await searchRestaurants(loc || "São Paulo", q || undefined);
+      restaurants = result.restaurants;
     } else {
       const lat = parseFloat(latStr!);
       const lon = parseFloat(lonStr!);
-      restaurants = await getNearbyRestaurants(lat, lon);
+      const result = await getNearbyRestaurants(lat, lon);
+      restaurants = result.restaurants;
     }
     
     if (restaurants.length === 0 && !process.env.GOOGLE_MAPS_API_KEY) {

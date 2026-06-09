@@ -418,7 +418,7 @@ const MOCK_RESTAURANTS: RestaurantCard[] = [
   }
 ];
 
-export async function getNearbyRestaurants(lat: number, lon: number, locationName?: string): Promise<RestaurantCard[]> {
+export async function getNearbyRestaurants(lat: number, lon: number, locationName?: string, pageToken?: string): Promise<{ restaurants: RestaurantCard[], nextPageToken?: string }> {
   const isMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
   console.log(`[RestaurantService] getNearbyRestaurants - Mock: ${isMock}, Key exists: ${!!GOOGLE_MAPS_API_KEY}`);
   
@@ -427,18 +427,18 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
     
     if (locationName) {
       // Filtro rigoroso pela cidade selecionada
-      return MOCK_RESTAURANTS.filter(r => 
+      return { restaurants: MOCK_RESTAURANTS.filter(r => 
         normalize(r.city).includes(normalize(locationName)) ||
         normalize(locationName).includes(normalize(r.city))
-      );
+      )};
     }
     
-    return MOCK_RESTAURANTS;
+    return { restaurants: MOCK_RESTAURANTS };
   }
 
   if (!GOOGLE_MAPS_API_KEY) {
     console.error("GOOGLE_MAPS_API_KEY não configurada.");
-    return [];
+    return { restaurants: [] };
   }
 
   try {
@@ -460,21 +460,29 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
             radius: 3000.0,
           },
         },
+        ...(pageToken ? { pageToken } : {})
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Google Places API Erro:", errorData);
-      return [];
+      return { restaurants: [] };
     }
 
     const data = await response.json();
     const places: GooglePlace[] = data.places || [];
+    const nextPageToken = data.nextPageToken;
 
-    return places.map((place: GooglePlace) => {
+    const mapped = places.map((place: GooglePlace) => {
+      // Filtra postos de gasolina que o Google categoriza erroneamente
+      const lowerName = (place.displayName?.text || "").toLowerCase();
+      if (lowerName.includes("posto ") || lowerName.includes("ipiranga") || lowerName.includes("petrobras") || lowerName.includes("shell") || lowerName.includes("auto posto")) {
+        return null;
+      }
+
       const addressComponents = place.addressComponents || [];
-      const cityComp = addressComponents.find((c) => c?.types?.includes("locality"));
+      const cityComp = addressComponents.find((c) => c?.types?.includes("locality") || c?.types?.includes("administrative_area_level_2"));
       const stateComp = addressComponents.find((c) => c?.types?.includes("administrative_area_level_1"));
       
       const city = cityComp?.longText || "São Paulo";
@@ -496,14 +504,16 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
         image: imageUrl,
         openUntil: "23:00",
       };
-    });
+    }).filter(Boolean);
+    
+    return { restaurants: mapped as RestaurantCard[], nextPageToken };
   } catch (error) {
     console.error("Erro no Restaurant Service (Google):", error);
-    return [];
+    return { restaurants: [] };
   }
 }
 
-export async function searchRestaurants(locationName: string, query?: string, options?: { openNow?: boolean }): Promise<RestaurantCard[]> {
+export async function searchRestaurants(locationName: string, query?: string, options?: { openNow?: boolean, pageToken?: string }): Promise<{ restaurants: RestaurantCard[], nextPageToken?: string }> {
   const isMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
   console.log(`[RestaurantService] searchRestaurants - Mock: ${isMock}, Key exists: ${!!GOOGLE_MAPS_API_KEY}`);
   
@@ -518,9 +528,12 @@ export async function searchRestaurants(locationName: string, query?: string, op
       );
     }
     if (query) {
+      const lowerQuery = normalize(query);
       results = results.filter(r => 
-        normalize(r.name).includes(normalize(query)) || 
-        normalize(r.city).includes(normalize(query))
+        normalize(r.name).includes(lowerQuery) || 
+        normalize(r.city).includes(lowerQuery) ||
+        (r.category && normalize(r.category).includes(lowerQuery)) ||
+        (r as RestaurantCard & { neighborhood?: string }).neighborhood?.toLowerCase().includes(lowerQuery)
       );
     }
     if (options?.openNow) {
@@ -536,15 +549,18 @@ export async function searchRestaurants(locationName: string, query?: string, op
       });
     }
     
-    return results;
+    return { restaurants: results };
   }
 
   if (!GOOGLE_MAPS_API_KEY) {
     console.error("GOOGLE_MAPS_API_KEY não configurada.");
-    return [];
+    return { restaurants: [] };
   }
 
-  const textQuery = query ? `${query} em ${locationName}, SP` : `Restaurantes em ${locationName}, SP`;
+  // Forçar uma busca abrangente por "restaurantes em X" no Google API caso a query seja curta e pareça uma cidade
+  const textQuery = query 
+    ? (query.split(" ").length === 1 && !query.toLowerCase().includes("restaurante") ? `restaurantes em ${query}` : query) 
+    : `Restaurantes em ${locationName}`;
 
   try {
     const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
@@ -557,24 +573,36 @@ export async function searchRestaurants(locationName: string, query?: string, op
       next: { revalidate: 3600 },
       body: JSON.stringify({
         textQuery: textQuery,
+        // Restrição estrita adicionada: Garante que apenas restaurantes sejam retornados,
+        // impedindo que a API retorne a rua em si (ex: "Avenida Paulista") como um resultado válido,
+        // retornando ao invés disso os restaurantes localizados na Avenida Paulista.
+        includedType: "restaurant",
         maxResultCount: 20,
         languageCode: "pt-BR",
-        ...(options?.openNow ? { openNow: true } : {})
+        ...(options?.openNow ? { openNow: true } : {}),
+        ...(options?.pageToken ? { pageToken: options.pageToken } : {})
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Google Places API Erro (Text Search):", errorData);
-      return [];
+      return { restaurants: [] };
     }
 
     const data = await response.json();
     const places: GooglePlace[] = data.places || [];
+    const nextPageToken = data.nextPageToken;
 
-    return places.map((place: GooglePlace) => {
+    const mapped = places.map((place: GooglePlace) => {
+      // Filtra postos de gasolina que o Google categoriza erroneamente
+      const lowerName = (place.displayName?.text || "").toLowerCase();
+      if (lowerName.includes("posto ") || lowerName.includes("ipiranga") || lowerName.includes("petrobras") || lowerName.includes("shell") || lowerName.includes("auto posto")) {
+        return null;
+      }
+
       const addressComponents = place.addressComponents || [];
-      const cityComp = addressComponents.find((c) => c?.types?.includes("locality"));
+      const cityComp = addressComponents.find((c) => c?.types?.includes("locality") || c?.types?.includes("administrative_area_level_2"));
       const stateComp = addressComponents.find((c) => c?.types?.includes("administrative_area_level_1"));
       
       const city = cityComp?.longText || locationName || "São Paulo";
@@ -596,10 +624,12 @@ export async function searchRestaurants(locationName: string, query?: string, op
         image: imageUrl,
         openUntil: "23:00",
       };
-    });
+    }).filter(Boolean);
+    
+    return { restaurants: mapped as RestaurantCard[], nextPageToken };
   } catch (error) {
     console.error("Erro no searchRestaurants (Google TextSearch):", error);
-    return [];
+    return { restaurants: [] };
   }
 }
 
@@ -623,6 +653,8 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
           },
           body: JSON.stringify({
             textQuery: `${base.name} em ${base.city}, SP`,
+            // Restrição estrita adicionada para seguir o padrão do searchRestaurants
+            includedType: "restaurant",
             maxResultCount: 1,
             languageCode: "pt-BR",
           }),
@@ -643,7 +675,7 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
             if (realData.ok) {
               const place = await realData.json();
               const addressComponents = place.addressComponents || [];
-              const cityComp = addressComponents.find((c: { types?: string[]; longText?: string }) => c?.types?.includes("locality"));
+              const cityComp = addressComponents.find((c: { types?: string[]; longText?: string }) => c?.types?.includes("locality") || c?.types?.includes("administrative_area_level_2"));
               const stateComp = addressComponents.find((c: { types?: string[]; shortText?: string }) => c?.types?.includes("administrative_area_level_1"));
               const city = cityComp?.longText || base.city;
               const state = stateComp?.shortText || base.state;
@@ -730,7 +762,7 @@ export async function getRestaurantById(id: string): Promise<RestaurantDetails |
     const place = await response.json();
     
     const addressComponents = place.addressComponents || [];
-    const cityComp = addressComponents.find((c: { types?: string[]; longText?: string }) => c?.types?.includes("locality"));
+    const cityComp = addressComponents.find((c: { types?: string[]; longText?: string }) => c?.types?.includes("locality") || c?.types?.includes("administrative_area_level_2"));
     const stateComp = addressComponents.find((c: { types?: string[]; shortText?: string }) => c?.types?.includes("administrative_area_level_1"));
     const city = cityComp?.longText || "São Paulo";
     const state = stateComp?.shortText || "SP";

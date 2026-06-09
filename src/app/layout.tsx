@@ -32,6 +32,7 @@ import { AuthModalProvider } from "@/components/providers/AuthModalProvider";
 import { FavoritesProvider } from "@/components/providers/FavoritesProvider";
 
 import CookieBanner from "@/components/layout/CookieBanner";
+import { MapProvider } from "@/components/providers/MapProvider";
 
 export default function RootLayout({
   children,
@@ -47,7 +48,8 @@ export default function RootLayout({
         <AuthProvider>
           <AuthModalProvider>
             <FavoritesProvider>
-              <Navbar />
+              <MapProvider>
+                <Navbar />
               <main id="main-content" className="grow" tabIndex={-1}>
                 {children}
               </main>
@@ -55,7 +57,8 @@ export default function RootLayout({
               <AccessibilityPanel />
               <CookieBanner />
               <AriaAnnouncer />
-              <ToastContainer />
+                <ToastContainer />
+              </MapProvider>
             </FavoritesProvider>
           </AuthModalProvider>
         </AuthProvider>

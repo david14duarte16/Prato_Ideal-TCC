@@ -64,7 +64,15 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vlibras.gov.br; style-src 'self' 'unsafe-inline' https://vlibras.gov.br; img-src 'self' data: blob: https:; font-src 'self' data: https://vlibras.gov.br; connect-src 'self' https://places.googleapis.com https://maps.googleapis.com ws: wss: https://vlibras.gov.br; frame-src 'self' https://www.google.com https://maps.google.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vlibras.gov.br https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://vlibras.gov.br https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://vlibras.gov.br https://fonts.gstatic.com; connect-src 'self' https://places.googleapis.com https://maps.googleapis.com ws: wss: https://vlibras.gov.br; frame-src 'self' https://www.google.com https://maps.google.com;",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)",
           },
         ],
       },
