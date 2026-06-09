@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -78,8 +78,10 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Search Bar Refatorada */}
-        <SearchBar />
+        {/* Search Bar Refatorada com Suspense Boundary para Next 16 */}
+        <Suspense fallback={<div className="flex-1 max-w-2xl mx-8 h-14 bg-gray-50 dark:bg-zinc-900 rounded-2xl animate-pulse border border-gray-100 dark:border-zinc-800 hidden md:block" />}>
+          <SearchBar />
+        </Suspense>
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Link 
