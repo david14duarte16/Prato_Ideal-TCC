@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { apiClient } from "@/lib/services/apiClient";
-import { getRestaurantById } from "@/lib/services/restaurantService";
-import { announce } from "@/components/accessibility/AriaAnnouncer";
+import { apiClient } from "@/services/apiClient";
+import { getRestaurantById } from "@/services/restaurantService";
+import { announce } from "@/components/features/accessibility/AriaAnnouncer";
 import { useRouter } from "next/navigation";
 
 export interface FavoriteItem {

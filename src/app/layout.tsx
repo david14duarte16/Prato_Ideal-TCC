@@ -25,8 +25,8 @@ export const metadata: Metadata = {
 };
 
 import Footer from "@/components/layout/Footer";
-import AccessibilityPanel from "@/components/accessibility/AccessibilityPanel";
-import AriaAnnouncer from "@/components/accessibility/AriaAnnouncer";
+import AccessibilityPanel from "@/components/features/accessibility/AccessibilityPanel";
+import AriaAnnouncer from "@/components/features/accessibility/AriaAnnouncer";
 import ToastContainer from "@/components/ui/Toast";
 import { AuthModalProvider } from "@/components/providers/AuthModalProvider";
 import { FavoritesProvider } from "@/components/providers/FavoritesProvider";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { announce } from "@/components/accessibility/AriaAnnouncer";
+import { announce } from "@/components/features/accessibility/AriaAnnouncer";
 
 export function useAccessibility() {
   const [highContrast, setHighContrast] = useState(false);

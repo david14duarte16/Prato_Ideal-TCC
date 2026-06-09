@@ -26,6 +26,3 @@ export function getUserLevelData(count: number) {
   };
 }
 
-export function getUserTitle(count: number) {
-  return getUserLevelData(count).currentTitle;
-}

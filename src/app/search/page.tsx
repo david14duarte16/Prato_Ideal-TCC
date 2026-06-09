@@ -1,5 +1,5 @@
-import RestaurantGrid from "@/components/restaurant/RestaurantGrid";
-import { getNearbyRestaurants } from "@/lib/services/restaurantService";
+import RestaurantGrid from "@/components/features/restaurant/RestaurantGrid";
+import { getNearbyRestaurants } from "@/services/restaurantService";
 import Navbar from "@/components/layout/Navbar";
 
 

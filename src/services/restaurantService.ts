@@ -1,5 +1,12 @@
+/**
+ * Service Layer: Integração com Google Places API.
+ * 
+ * Abstrai a complexidade do Places API, formatando payloads e limitando os dados
+ * retornados através de FieldMask. Isso é mandatório para evitar faturamento (billing) 
+ * excessivo no Google Cloud trazendo dados que a UI não vai renderizar.
+ */
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-import { normalize } from "../utils";
+import { normalize } from "@/lib/utils";
 
 export interface RestaurantCard {
   id: string;
@@ -442,6 +449,9 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
   }
 
   try {
+    // INFO: Limitamos a busca usando searchNearby para pegar apenas o que está no raio.
+    // O { revalidate: 3600 } injeta o fetch no Data Cache do Next.js por 1 hora. 
+    // É essencial pra não estourar o limite da API se a home tiver picos de tráfego.
     const response = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
       method: "POST",
       headers: {

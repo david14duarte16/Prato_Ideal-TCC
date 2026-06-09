@@ -1,7 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { apiClient } from "@/lib/services/apiClient";
+import { apiClient } from "@/services/apiClient";
 
 interface ApiUser {
   Id: string;

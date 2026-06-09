@@ -1,9 +1,9 @@
 import Link from "next/link";
-import RestaurantGrid from "@/components/restaurant/RestaurantGrid";
-import RestaurantCarousel from "@/components/restaurant/RestaurantCarousel";
-import CollectionsSection from "@/components/home/CollectionsSection";
-import PromoBanner from "@/components/home/PromoBanner";
-import { searchRestaurants, getNearbyRestaurants, RestaurantCard } from "@/lib/services/restaurantService";
+import RestaurantGrid from "@/components/features/restaurant/RestaurantGrid";
+import RestaurantCarousel from "@/components/features/restaurant/RestaurantCarousel";
+import CollectionsSection from "@/components/features/home/CollectionsSection";
+import PromoBanner from "@/components/features/home/PromoBanner";
+import { searchRestaurants, getNearbyRestaurants, RestaurantCard } from "@/services/restaurantService";
 import { normalize } from "@/lib/utils";
 import { Restaurant, mockRestaurants } from "@/lib/mockData";
 

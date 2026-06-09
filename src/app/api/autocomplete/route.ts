@@ -1,5 +1,12 @@
+/**
+ * Route handler para a API de Autocomplete (BFF - Backend for Frontend).
+ * 
+ * Responsável por centralizar a busca (Restaurantes, Regiões e Categorias) em um único endpoint.
+ * Isso reduz viagens de rede (round-trips) no client e delega o processamento pesado e chaves
+ * da API para o lado do servidor de forma segura.
+ */
 import { NextResponse } from "next/server";
-import { searchRestaurants } from "@/lib/services/restaurantService";
+import { searchRestaurants } from "@/services/restaurantService";
 import { z } from "zod";
 
 // AppSec: Validação rigorosa de input (Evita XSS e ataques de buffer/tamanho)
@@ -11,7 +18,10 @@ const autocompleteQuerySchema = z.object({
     .transform((val) => val.trim()),
 });
 
-// AppSec: Rate Limiting Simples em Memória (Para produção ideal usar Upstash Redis)
+// AppSec: Rate Limiting Simples em Memória.
+// FIXME: Refatorar usando uma solução persistente e distribuída (ex: Upstash Redis) para produção.
+// Como a Vercel é serverless, o estado em memória será resetado toda vez que o pod congelar (cold start),
+// o que inutiliza o rate limit em cenários de alta escala.
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minuto
 const MAX_REQUESTS_PER_WINDOW = 30; // 30 requests por minuto
@@ -82,6 +92,8 @@ export async function GET(request: Request) {
     const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
     // 1. Mapeamento de Categorias Locais (Mock/Estático)
+    // INFO: Mantido em memória pois as categorias base raramente mudam. 
+    // Evita um SELECT desnecessário no banco para listagem padrão.
     const knownCategories = [
       "Pizza", "Hambúrguer", "Sushi", "Japonês", "Italiano", "Churrasco", 
       "Saudável", "Café", "Doces", "Frutos do Mar", "Vegetariano"

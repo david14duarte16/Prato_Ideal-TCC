@@ -3,12 +3,12 @@
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-import { RestaurantDetails } from "@/lib/services/restaurantService";
-import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send, Share2, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { useFavorites } from "@/lib/hooks/useFavorites";
+import { RestaurantDetails } from "@/services/restaurantService";
+import { Star, MapPin, Phone, Clock, MessageSquare, Navigation, User, Heart, Send, Share2, X, ChevronLeft, ChevronRight, Map as MapIcon } from "lucide-react";
+import { useFavorites } from "@/hooks/useFavorites";
 import { useSession, signIn } from "next-auth/react";
 import { useAuthModal } from "@/components/providers/AuthModalProvider";
-import { apiClient } from "@/lib/services/apiClient";
+import { apiClient } from "@/services/apiClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/Toast";
 import { Map, AdvancedMarker, useMapsLibrary } from "@vis.gl/react-google-maps";

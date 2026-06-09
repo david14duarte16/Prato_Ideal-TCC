@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { apiClient } from "@/lib/services/apiClient";
+import { apiClient } from "@/services/apiClient";
+import axios from "axios";
 
 export async function POST(req: Request) {
   try {
@@ -9,13 +10,19 @@ export async function POST(req: Request) {
     const response = await apiClient.post("/Usuario/cadastro", body);
     
     return NextResponse.json(response.data, { status: response.status });
-  } catch (error: any) {
-    console.error("Erro no proxy de cadastro:", error.response?.data || error.message);
-    
-    // Repassa o erro da API ou um erro genérico
-    const status = error.response?.status || 500;
-    const data = error.response?.data || { error: "Erro interno ao cadastrar" };
-    
-    return NextResponse.json(data, { status });
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("Erro no proxy de cadastro:", error.response?.data || error.message);
+      
+      // Repassa o erro da API ou um erro genérico
+      const status = error.response?.status || 500;
+      const data = error.response?.data || { error: "Erro interno ao cadastrar" };
+      
+      return NextResponse.json(data, { status });
+    }
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Erro no proxy de cadastro genérico:", errorMessage);
+    return NextResponse.json({ error: "Erro interno ao cadastrar" }, { status: 500 });
   }
 }

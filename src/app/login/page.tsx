@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { UtensilsCrossed } from "lucide-react";
-import AuthForm from "./components/AuthForm";
+import AuthForm from "@/components/features/auth/AuthForm";
 
 export default function LoginPage() {
   return (
@@ -24,9 +23,9 @@ export default function LoginPage() {
               alt="Logo Prato Ideal"
               width={48}
               height={48}
-              className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+              className="object-contain transition-transform duration-500 group-hover:rotate-15"
             />
-            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent font-outfit">
+            <span className="text-2xl font-black tracking-tight bg-linear-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent font-outfit">
               Prato Ideal
             </span>
           </Link>
@@ -52,9 +51,9 @@ export default function LoginPage() {
             alt="Logo Prato Ideal"
             width={32}
             height={32}
-            className="object-contain transition-transform duration-500 group-hover:rotate-[15deg]"
+            className="object-contain transition-transform duration-500 group-hover:rotate-15"
           />
-          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent font-outfit">
+          <span className="text-xl font-extrabold tracking-tight bg-linear-to-r from-[#B33817] to-[#DD9318] bg-clip-text text-transparent font-outfit">
             Prato Ideal
           </span>
         </Link>

@@ -1,6 +1,6 @@
-import { getRestaurantById } from "@/lib/services/restaurantService";
+import { getRestaurantById } from "@/services/restaurantService";
 import { notFound } from "next/navigation";
-import RestaurantDetailClient from "@/components/restaurant/RestaurantDetailClient";
+import RestaurantDetailClient from "@/components/features/restaurant/RestaurantDetailClient";
 import { Metadata } from "next";
 
 interface PageProps {

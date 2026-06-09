@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
-import AuthModal from "../auth/AuthModal";
+import AuthModal from "../ui/AuthModal";
 
 interface AuthModalContextProps {
   openAuthModal: (customMessage?: string) => void;

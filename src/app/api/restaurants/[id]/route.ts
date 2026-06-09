@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRestaurantById } from "@/lib/services/restaurantService";
+import { getRestaurantById } from "@/services/restaurantService";
 
 export async function GET(
   request: Request,

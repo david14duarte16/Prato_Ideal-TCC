@@ -1,3 +1,10 @@
+/**
+ * Configuração principal do Next.js e arquitetura de rede.
+ * 
+ * INFO: O 'rewrites' aqui atua como um proxy reverso transparente. Ele captura as requisições
+ * locais em /api/render/* e faz o proxy back-to-back para o backend no Render, driblando 
+ * bloqueios de CORS no browser de forma elegante sem injetar headers extras na API.
+ */
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -42,6 +49,9 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    // TODO: Ajustar política restritiva de CSP antes do go-live. 
+    // Atualmente estamos permitindo 'unsafe-eval' e 'unsafe-inline' temporariamente 
+    // para garantir que scripts de terceiros (Google Maps SDK, VLibras widget) não quebrem.
     return [
       {
         source: "/(.*)",

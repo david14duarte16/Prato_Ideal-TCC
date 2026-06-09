@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Ticket, X, Copy, Check } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { announce } from "@/components/accessibility/AriaAnnouncer";
+import { announce } from "@/components/features/accessibility/AriaAnnouncer";
 
 export default function PromoBanner() {
   const [showModal, setShowModal] = useState(false);

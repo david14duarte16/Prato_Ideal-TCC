@@ -16,7 +16,7 @@ import {
   SearchX, 
   AlertCircle 
 } from "lucide-react";
-import { RestaurantCard } from "@/lib/services/restaurantService";
+import { RestaurantCard } from "@/services/restaurantService";
 
 type RecentSearch = 
   | { type: "text"; query: string }
@@ -32,6 +32,12 @@ type NavItem =
 
 const RECENT_SEARCHES_KEY = "pratoideal_recent_searches";
 
+/**
+ * Componente principal da barra de busca unificada (Omnibox).
+ * 
+ * Lida com o roteamento para resultados e orquestra a listagem de Restaurantes, Regiões 
+ * e Categorias. Contém lógicas robustas de a11y (focus trapping e setas de teclado).
+ */
 export default function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -67,6 +73,8 @@ export default function SearchBar() {
   }, []);
 
   // Salvar busca recente
+  // INFO: Optamos por um state client-side (localStorage) ao invés do banco de dados.
+  // Garante latência zero pro usuário na renderização das "buscas recentes" e economiza I/O do DB.
   const saveRecentSearch = useCallback((item: RecentSearch) => {
     setRecentSearches((prev) => {
       // Remove duplicada
@@ -123,6 +131,8 @@ export default function SearchBar() {
   }, [showDropdown]);
 
   // Busca na API com debounce
+  // INFO: Debounce de 300ms crucial aqui. Ele segura as requisições enquanto o usuário 
+  // ainda estiver digitando para reduzir a carga do nosso BFF (/api/autocomplete) e os custos da API de Places.
   useEffect(() => {
     const timer = setTimeout(async () => {
       const q = searchQuery.trim();

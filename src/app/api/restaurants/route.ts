@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getNearbyRestaurants, searchRestaurants } from "@/lib/services/restaurantService";
+import { getNearbyRestaurants, searchRestaurants } from "@/services/restaurantService";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

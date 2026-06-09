@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { apiClient } from "@/lib/services/apiClient";
+import { apiClient } from "@/services/apiClient";
+import axios from "axios";
 
 interface AuthFormProps {
   defaultIsLogin?: boolean;
@@ -84,18 +85,24 @@ export default function AuthForm({ defaultIsLogin = true }: AuthFormProps) {
         setError("");
         setSuccessMsg("Conta criada com sucesso! Por favor, faça o login.");
       }
-    } catch (err: any) {
-      if (err.response) {
-         // O servidor respondeu com um status de erro (ex: 400, 500)
-         console.warn(`Aviso da API (${err.response.status}):`, err.response.data);
-         setError(err.response.data?.message || err.response.data?.error || `Erro interno no servidor (Status ${err.response.status}). Tente novamente mais tarde.`);
-      } else if (err.request) {
-         // A requisição foi feita mas não houve resposta (erro de rede)
-         console.warn("Sem resposta da API:", err.request);
-         setError("Não foi possível conectar ao servidor. Verifique sua conexão.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+           // O servidor respondeu com um status de erro (ex: 400, 500)
+           console.warn(`Aviso da API (${err.response.status}):`, err.response.data);
+           setError(err.response.data?.message || err.response.data?.error || `Erro interno no servidor (Status ${err.response.status}). Tente novamente mais tarde.`);
+        } else if (err.request) {
+           // A requisição foi feita mas não houve resposta (erro de rede)
+           console.warn("Sem resposta da API:", err.request);
+           setError("Não foi possível conectar ao servidor. Verifique sua conexão.");
+        } else {
+           console.error("Erro na requisição:", err.message);
+           setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+        }
       } else {
-         console.error("Erro na requisição:", err.message);
-         setError("Ocorreu um erro ao criar a conta. Tente novamente.");
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error("Erro na requisição genérico:", errorMsg);
+        setError("Ocorreu um erro ao criar a conta. Tente novamente.");
       }
     } finally {
       setIsLoading(false);

@@ -6,11 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Camera, MapPin, Calendar, Edit3, Shield, Star, Heart, Clock, ChevronRight, Lock, Key, Check, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/layout/Navbar";
-import { useFavorites } from "@/lib/hooks/useFavorites";
-import { ReviewItem } from "@/lib/services/restaurantService";
+import { useFavorites } from "@/hooks/useFavorites";
+import { ReviewItem } from "@/services/restaurantService";
 import { Badge } from "@/components/ui/Badge";
-import { getUserLevelData, GAMIFICATION_LEVELS } from "@/lib/utils/gamification";
-import { announce } from "@/components/accessibility/AriaAnnouncer";
+import { getUserLevelData, GAMIFICATION_LEVELS } from "@/lib/gamification";
+import { announce } from "@/components/features/accessibility/AriaAnnouncer";
 import Link from "next/link";
 
 const LEVEL_INDEX: Record<string, number> = { gray: 0, blue: 1, purple: 2, amber: 3 };
@@ -79,7 +79,7 @@ export default function PerfilPage() {
       const fetchApiReviews = async () => {
         try {
           if (session?.user && (session.user as { accessToken?: string; id?: string }).accessToken) {
-            const { apiClient } = await import('@/lib/services/apiClient');
+            const { apiClient } = await import('@/services/apiClient');
             const token = (session.user as { accessToken?: string; id?: string }).accessToken;
             const res = await apiClient.get('/Review/usuario', {
               headers: { Authorization: `Bearer ${token}` }
@@ -169,7 +169,7 @@ export default function PerfilPage() {
     try {
       setIsUploadingPhoto(true);
       const token = (session.user as { accessToken?: string; id?: string }).accessToken;
-      const { apiClient } = await import('@/lib/services/apiClient');
+      const { apiClient } = await import('@/services/apiClient');
       
       const formData = new FormData();
       formData.append("foto", file);

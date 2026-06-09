@@ -1,6 +1,6 @@
 "use client";
 
-import { useFavorites } from "@/lib/hooks/useFavorites";
+import { useFavorites } from "@/hooks/useFavorites";
 import Navbar from "@/components/layout/Navbar";
 import { Heart, Search, ChevronRight } from "lucide-react";
 import Link from "next/link";

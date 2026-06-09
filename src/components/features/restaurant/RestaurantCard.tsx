@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { RestaurantCard as RestaurantType } from "@/lib/services/restaurantService";
-import { useFavorites } from "@/lib/hooks/useFavorites";
+import { RestaurantCard as RestaurantType } from "@/services/restaurantService";
+import { useFavorites } from "@/hooks/useFavorites";
 import { useSession } from "next-auth/react";
 import { Heart, Star, MapPin, Clock, Share2, Percent, Tag } from "lucide-react";
 import { motion } from "framer-motion";

@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { RestaurantCard as RestaurantCardType } from "@/lib/services/restaurantService";
+import { RestaurantCard as RestaurantCardType } from "@/services/restaurantService";
 import RestaurantCard from "./RestaurantCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchRestaurants, getNearbyRestaurants } from "@/lib/services/restaurantService";
+import { searchRestaurants, getNearbyRestaurants } from "@/services/restaurantService";
 
 export async function POST(request: Request) {
   try {

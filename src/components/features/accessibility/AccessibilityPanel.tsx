@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ZoomIn, ZoomOut, Contrast, Type, X, Accessibility, HandHelping, Link2, PauseCircle, Baseline } from "lucide-react";
-import { useAccessibility } from "@/lib/hooks/useAccessibility";
+import { ZoomIn, ZoomOut, Contrast, Type, X, Accessibility, Link2, PauseCircle, Baseline } from "lucide-react";
+import { useAccessibility } from "@/hooks/useAccessibility";
 
 export default function AccessibilityPanel() {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,7 +77,7 @@ export default function AccessibilityPanel() {
   if (!isLoaded) return null;
 
   return (
-    <div className="fixed left-4 sm:left-6 bottom-6 sm:bottom-8 z-[9999] flex flex-col items-start gap-4">
+    <div className="fixed left-4 sm:left-6 bottom-6 sm:bottom-8 z-9999 flex flex-col items-start gap-4">
       {isOpen ? (
         <div 
           ref={panelRef}
