@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-gray-100`}>
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-gray-100 overflow-x-hidden`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <a href="#main-content" className="skip-link">Pular para o conteúdo principal</a>
         <AuthProvider>

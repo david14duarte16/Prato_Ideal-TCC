@@ -131,7 +131,7 @@ export default async function Home(props: {
         </div>
       </div>
 
-      <main className="flex flex-col items-center justify-between pb-16">
+      <main className="flex flex-col items-center justify-between pb-24 md:pb-16 w-full">
         {isSearchMode ? (
           <div className="w-full mt-8">
             <RestaurantGrid 

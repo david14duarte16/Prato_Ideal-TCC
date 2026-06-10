@@ -300,7 +300,7 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
       <Navbar />
       
-      <div className="pt-40 md:pt-32 pb-20 container mx-auto px-4 max-w-5xl">
+      <div className="pt-40 md:pt-32 pb-20 w-full mx-auto px-4 md:px-8 max-w-5xl">
         {/* Header/Cover Section */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -384,9 +384,9 @@ export default function PerfilPage() {
               </motion.h1>
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-gray-600 dark:text-gray-300 font-medium">
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                  <Mail size={16} className="text-gray-400 dark:text-gray-500" />
-                  <span className="text-sm">{email}</span>
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-md transition-shadow max-w-full">
+                  <Mail size={16} className="text-gray-400 dark:text-gray-500 shrink-0" />
+                  <span className="text-sm truncate max-w-[150px] sm:max-w-[250px]">{email}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-700/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                   <MapPin size={16} className="text-gray-400 dark:text-gray-500" />
@@ -436,7 +436,7 @@ export default function PerfilPage() {
                 </p>
               )}
               
-              <div className="grid grid-cols-2 gap-4 mt-8">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 w-full mt-8">
                 <button onClick={() => setActiveTab("reviews")} className="text-center p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-3xl group hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                   <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Star className="text-yellow-500" />
@@ -503,7 +503,7 @@ export default function PerfilPage() {
                 Suas Conquistas
                 <Shield className="text-gray-700 w-6 h-6" />
               </h3>
-              <div className="grid grid-cols-2 gap-4 relative z-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full relative z-10">
                 {GAMIFICATION_LEVELS.map((level: { min: number; title: string; color: string; icon: string; humor: string; nextAt: number | null }, i: number) => {
                   const unlocked = reviews.length >= level.min;
                   

@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 import SearchBar from "./SearchBar";
 
 
@@ -13,6 +14,7 @@ import SearchBar from "./SearchBar";
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
 
@@ -104,7 +106,7 @@ export default function Navbar() {
           </Link>
 
           {status === "authenticated" && session?.user ? (
-            <div className="relative" ref={userMenuRef}>
+            <div className="relative hidden md:block" ref={userMenuRef}>
               <button 
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 aria-expanded={showUserMenu}
@@ -203,15 +205,122 @@ export default function Navbar() {
             </>
           )}
 
-          {/* Mobile Menu */}
-          <button className="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
-            </svg>
+          {/* Mobile Menu Toggle Button */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-
       </nav>
+
+      {/* Mobile Menu Panel Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden absolute top-full left-0 right-0 h-[calc(100vh-64px)] z-50 bg-white dark:bg-zinc-950 overflow-y-auto border-t border-gray-100 dark:border-zinc-800 shadow-2xl"
+          >
+            <div className="flex flex-col pb-12">
+              
+              {/* Highlight Profile Info na Liderança (Topo do Mobile Menu) */}
+              {status === "authenticated" && session?.user ? (
+                <div className="bg-gray-50 dark:bg-zinc-900/80 px-6 py-6 border-b border-gray-100 dark:border-zinc-800">
+                  <div className="flex items-center gap-4">
+                    {session.user.image ? (
+                      <Image 
+                        src={session.user.image} 
+                        alt="User" 
+                        width={56} 
+                        height={56}
+                        unoptimized={session.user.image.includes('armazenamentopratoideal') || session.user.image.includes('blob.core.windows.net')}
+                        className="w-14 h-14 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm" 
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-black text-2xl capitalize shadow-sm">
+                        {session.user.name?.charAt(0) || "U"}
+                      </div>
+                    )}
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-lg font-black text-gray-900 dark:text-white truncate">{session.user.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{session.user.email}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Links Principais (Navegação Padrão) */}
+              <div className="px-6 py-6 flex flex-col gap-5">
+                <Link 
+                  href="/" 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className="block text-lg font-bold text-gray-700 dark:text-gray-300 hover:text-red-500 transition-colors"
+                >
+                  Home
+                </Link>
+                <Link 
+                  href="/sobre" 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className="block text-lg font-bold text-gray-700 dark:text-gray-300 hover:text-red-500 transition-colors"
+                >
+                  Sobre Nós
+                </Link>
+                <Link 
+                  href="/contato" 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className="block text-lg font-bold text-gray-700 dark:text-gray-300 hover:text-red-500 transition-colors"
+                >
+                  Contato
+                </Link>
+              </div>
+
+              {/* Links Específicos do Usuário (Ou Auth Calls to Action) */}
+              {status === "authenticated" && session?.user ? (
+                <>
+                  <div className="w-full h-px bg-gray-100 dark:bg-zinc-800 my-2" />
+                  <div className="px-6 py-6 flex flex-col gap-5">
+                    <Link href="/perfil" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-600 dark:text-gray-400 hover:text-red-500">Meu Perfil</Link>
+                    <Link href="/favoritos" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-600 dark:text-gray-400 hover:text-red-500">Favoritos</Link>
+                    <Link href="/configuracoes" onClick={() => setIsMobileMenuOpen(false)} className="block text-base font-medium text-gray-600 dark:text-gray-400 hover:text-red-500">Configurações</Link>
+                    
+                    <button 
+                      onClick={() => { signOut(); setIsMobileMenuOpen(false); }} 
+                      className="w-full text-center text-base text-red-500 font-bold mt-4 py-3.5 bg-red-50 dark:bg-red-500/10 rounded-2xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                    >
+                      Sair da Conta
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-full h-px bg-gray-100 dark:bg-zinc-800 my-2" />
+                  <div className="px-6 py-6 flex flex-col gap-4">
+                    <Link 
+                      href="/login" 
+                      onClick={() => setIsMobileMenuOpen(false)} 
+                      className="block font-bold text-center py-4 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-900 dark:text-white rounded-2xl transition-colors text-lg"
+                    >
+                      Log in
+                    </Link>
+                    <Link 
+                      href="/signup" 
+                      onClick={() => setIsMobileMenuOpen(false)} 
+                      className="block font-bold text-center py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition-colors text-lg shadow-md"
+                    >
+                      Sign up
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </header>
   );
 }

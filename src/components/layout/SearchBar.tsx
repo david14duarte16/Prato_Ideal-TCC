@@ -207,6 +207,7 @@ export default function SearchBar() {
   // Ações de seleção
   const handleSelect = (item: NavItem) => {
     setShowDropdown(false);
+    inputRef.current?.blur();
     
     if (item.type === "recent") {
       const rs = item.data;
@@ -233,7 +234,7 @@ export default function SearchBar() {
       router.push(`/?loc=${encodeURIComponent(item.data.name)}`);
       
     } else if (item.type === "restaurant") {
-      setSearchQuery(item.data.name);
+      setSearchQuery("");
       saveRecentSearch({ 
         type: "restaurant", 
         id: item.data.id, 
@@ -262,6 +263,7 @@ export default function SearchBar() {
     } else {
       saveRecentSearch({ type: "text", query: q });
       setShowDropdown(false);
+      inputRef.current?.blur();
       router.push(`/?q=${encodeURIComponent(q)}`);
     }
   };

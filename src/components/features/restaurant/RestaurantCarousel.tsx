@@ -47,7 +47,7 @@ export default function RestaurantCarousel({ restaurants, title, subtitle }: Res
         </div>
         
         {/* Navigation Buttons */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden items-center gap-3">
           <button 
             onClick={() => scroll('left')}
             className="p-3 rounded-full border border-gray-200 text-gray-600 bg-white shadow-sm hover:bg-gray-50 hover:text-red-600 hover:border-red-100 transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/10"
@@ -65,18 +65,16 @@ export default function RestaurantCarousel({ restaurants, title, subtitle }: Res
         </div>
       </div>
 
-      <div className="relative" role="region" aria-label={`Carrossel de ${title}`}>
+      <div className="relative w-full" role="region" aria-label={`Lista de ${title}`}>
         <motion.div 
-          ref={scrollContainerRef}
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.1 }}
-          className="flex overflow-x-auto gap-6 pb-6 pt-2 snap-x snap-mandatory hide-scrollbar w-full"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full pb-6 pt-2"
         >
           {restaurants.map((restaurant) => (
-             <div key={restaurant.id} className="snap-start shrink-0 w-[280px] sm:w-[320px]">
+             <div key={restaurant.id} className="w-full">
                <RestaurantCard restaurant={restaurant} /> 
              </div>
           ))}
