@@ -401,9 +401,9 @@ export default function PerfilPage() {
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
           {/* Left Column - Stats & Bio */}
-          <div className="lg:col-span-1 space-y-8">
+          <div className="lg:col-span-5 space-y-8 w-full">
             <motion.div 
               {...fadeIn}
               transition={{ delay: 0.1 }}
@@ -503,7 +503,7 @@ export default function PerfilPage() {
                 Suas Conquistas
                 <Shield className="text-gray-700 w-6 h-6" />
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full relative z-10">
+              <div className="grid grid-cols-2 gap-4 w-full relative z-10">
                 {GAMIFICATION_LEVELS.map((level: { min: number; title: string; color: string; icon: string; humor: string; nextAt: number | null }, i: number) => {
                   const unlocked = reviews.length >= level.min;
                   
@@ -543,7 +543,7 @@ export default function PerfilPage() {
             </motion.div>
           </div>
 
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-7 space-y-8 w-full">
             <div className="bg-white dark:bg-zinc-900 p-2 rounded-3xl flex overflow-x-auto whitespace-nowrap hide-scrollbar gap-2 border border-gray-100 dark:border-zinc-800 shadow-sm mb-4 max-w-full">
               {["activity", "info", "reviews"].map((tab) => (
                 <button

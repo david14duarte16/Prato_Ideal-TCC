@@ -464,6 +464,7 @@ export async function getNearbyRestaurants(lat: number, lon: number, locationNam
         includedTypes: ["restaurant"],
         maxResultCount: 20,
         languageCode: "pt-BR",
+        regionCode: "BR",
         locationRestriction: {
           circle: {
             center: { latitude: lat, longitude: lon },
@@ -589,6 +590,13 @@ export async function searchRestaurants(locationName: string, query?: string, op
         includedType: "restaurant",
         maxResultCount: 20,
         languageCode: "pt-BR",
+        regionCode: "BR",
+        locationRestriction: {
+          rectangle: {
+            low: { latitude: -25.3, longitude: -53.1 },
+            high: { latitude: -19.7, longitude: -44.1 }
+          }
+        },
         ...(options?.openNow ? { openNow: true } : {}),
         ...(options?.pageToken ? { pageToken: options.pageToken } : {})
       }),

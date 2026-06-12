@@ -13,8 +13,12 @@ export default async function Home(props: {
   const searchParams = await props.searchParams;
   const locationName = searchParams.loc || "São Paulo";
   const query = (searchParams.q || "").trim();
-  const lat = searchParams.lat ? parseFloat(searchParams.lat) : undefined;
-  const lng = searchParams.lng ? parseFloat(searchParams.lng) : undefined;
+  
+  // AppSec: Prevenção de NaN quebrando a serialização do React Server Components
+  const rawLat = searchParams.lat;
+  const rawLng = searchParams.lng;
+  const lat = rawLat && !isNaN(parseFloat(rawLat)) ? parseFloat(rawLat) : undefined;
+  const lng = rawLng && !isNaN(parseFloat(rawLng)) ? parseFloat(rawLng) : undefined;
   
   let searchResults: Restaurant[] = [];
   let nextPageToken: string | undefined = undefined;

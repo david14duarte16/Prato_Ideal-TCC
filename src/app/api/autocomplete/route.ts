@@ -123,6 +123,13 @@ export async function GET(request: Request) {
           textQuery: q,
           maxResultCount: 3,
           languageCode: "pt-BR",
+          regionCode: "BR",
+          locationRestriction: {
+            rectangle: {
+              low: { latitude: -25.3, longitude: -53.1 },
+              high: { latitude: -19.7, longitude: -44.1 }
+            }
+          },
         }),
       });
 

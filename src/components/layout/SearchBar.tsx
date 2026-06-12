@@ -153,7 +153,12 @@ export default function SearchBar() {
           setSuggestions(results.restaurants?.slice(0, 5) || []);
           setRegions(results.regions || []);
           setCategories(results.categories || []);
-          setShowDropdown(true);
+          
+          // AppSec UX: Só reabre o painel se o usuário ainda estiver focando no input.
+          // Isso previne o bug onde apertar "Enter" rápido reabria o painel após o delay da API.
+          if (document.activeElement === inputRef.current) {
+            setShowDropdown(true);
+          }
           setFocusedIndex(-1); // Resetar foco ao carregar novos dados
         } catch (error) {
           console.error("Erro na busca de sugestões:", error);
@@ -258,12 +263,14 @@ export default function SearchBar() {
     const q = searchQuery.trim();
     if (!q) return;
 
+    // Força o fechamento e remoção do foco imediatamente (UX Mobile)
+    setShowDropdown(false);
+    inputRef.current?.blur();
+
     if (focusedIndex >= 0 && focusedIndex < navItems.length) {
       handleSelect(navItems[focusedIndex]);
     } else {
       saveRecentSearch({ type: "text", query: q });
-      setShowDropdown(false);
-      inputRef.current?.blur();
       router.push(`/?q=${encodeURIComponent(q)}`);
     }
   };
@@ -409,7 +416,7 @@ export default function SearchBar() {
           </div>
 
           <AnimatePresence>
-            {showDropdown && (
+            {showDropdown && (navItems.length > 0 || isLoading || error || (searchQuery.length > 1 && !isLoading && navItems.length === 0)) && (
               <motion.div 
                 id="search-dropdown"
                 role="listbox"
@@ -421,9 +428,17 @@ export default function SearchBar() {
               >
                 <div className="px-3 py-2 md:px-5 md:py-3">
                   
+                  {/* Loading State */}
+                  {isLoading && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center px-4" aria-live="polite">
+                      <Loader2 size={24} className="text-red-500 animate-spin mb-3" />
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">Buscando restaurantes...</p>
+                    </div>
+                  )}
+
                   {/* Empty State / Error */}
-                  {error && (
-                     <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+                  {!isLoading && error && (
+                     <div className="flex flex-col items-center justify-center py-8 text-center px-4" role="alert">
                       <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-3">
                         <AlertCircle size={24} className="text-red-500" />
                       </div>
